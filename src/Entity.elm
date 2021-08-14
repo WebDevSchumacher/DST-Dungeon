@@ -19,7 +19,7 @@ type EnemyType
 
 pirate : ( Int, Int ) -> Enemy
 pirate position =
-    { lifePoints = 1
+    { lifePoints = 10
     , attackDamage = 1
     , enemyType = Pirate
     , position = position
@@ -29,7 +29,7 @@ pirate position =
 
 troll : ( Int, Int ) -> Enemy
 troll position =
-    { lifePoints = 2
+    { lifePoints = 20
     , attackDamage = 1
     , enemyType = Troll
     , position = position

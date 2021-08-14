@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Action
 import Browser
 import Browser.Events
 import Entity exposing (Enemy, EnemyType(..))
@@ -27,12 +28,14 @@ type alias Model =
 
 type Msg
     = Direction Direction
-    | Move
+      --| Move
     | GenerateRoomsWidthAndHeight ( Int, Int ) NumberOfRooms InitialGeneration
     | GenerateRoom ( Int, Int ) InitialGeneration RectangularRoom
     | ConnectRooms
     | SpawnEnemies (List RectangularRoom)
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
+    | AttackEnemy Enemy
+    | AttackPlayer Enemy
 
 
 init : Model
@@ -63,11 +66,23 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Direction direction ->
-            ( { model
-                | player = movePlayer direction model
-              }
-            , Cmd.none
-            )
+            let
+                maybeEnemy =
+                    List.Extra.find (\enemy -> enemy.position == newLocation) model.enemies
+
+                newLocation =
+                    movePoint direction model.player.position
+            in
+            case maybeEnemy of
+                Nothing ->
+                    ( { model
+                        | player = movePlayer direction model
+                      }
+                    , Cmd.none
+                    )
+
+                Just enemy ->
+                    ( model, Task.perform (always (AttackEnemy enemy)) (Task.succeed ()) )
 
         GenerateRoomsWidthAndHeight roomWidthAndHeight numberOfRooms initial ->
             -- First generate the random With and Height of the Room then genereta it with (roomGen roomWidthAndHeight initial)
@@ -126,8 +141,31 @@ update msg model =
             , Cmd.none
             )
 
-        _ ->
-            ( model, Cmd.none )
+        --_ ->
+        --    ( model, Cmd.none )
+        AttackEnemy target ->
+            let
+                attacked =
+                    Action.hitEnemy model.player.currentWeapon target
+            in
+            if attacked.lifePoints <= 0 then
+                ( { model
+                    | enemies =
+                        List.Extra.remove target model.enemies
+                  }
+                , Cmd.none
+                )
+
+            else
+                ( { model
+                    | enemies =
+                        List.Extra.setIf (\enemy -> enemy == target) attacked model.enemies
+                  }
+                , Task.perform (always (AttackPlayer target)) (Task.succeed ())
+                )
+
+        AttackPlayer enemy ->
+            ( { model | player = Action.hitPlayer enemy model.player }, Cmd.none )
 
 
 addEnemyToModel : ( Int, EnemyType, RectangularRoom ) -> Model -> Model
@@ -192,25 +230,6 @@ addRoom room model initial =
                     }
 
 
-movePoint : Direction -> ( Int, Int ) -> ( Int, Int )
-movePoint direction ( x, y ) =
-    case direction of
-        Left ->
-            ( x - Environment.playerBoundBox, y )
-
-        Up ->
-            ( x, y - Environment.playerBoundBox )
-
-        Right ->
-            ( x + Environment.playerBoundBox, y )
-
-        Down ->
-            ( x, y + Environment.playerBoundBox )
-
-        _ ->
-            ( x, y )
-
-
 movePlayer : Direction -> Model -> Player
 movePlayer direction { player, gameMap, enemies } =
     let
@@ -228,6 +247,25 @@ movePlayer direction { player, gameMap, enemies } =
 
     else
         changedPlayer
+
+
+movePoint : Direction -> ( Int, Int ) -> ( Int, Int )
+movePoint direction ( x, y ) =
+    case direction of
+        Left ->
+            ( x - Environment.playerBoundBox, y )
+
+        Up ->
+            ( x, y - Environment.playerBoundBox )
+
+        Right ->
+            ( x + Environment.playerBoundBox, y )
+
+        Down ->
+            ( x, y + Environment.playerBoundBox )
+
+        _ ->
+            ( x, y )
 
 
 
