@@ -4,7 +4,9 @@ import Weapon exposing (Weapon)
 
 
 type alias Player =
-    { life : Int
+    { level : Int
+    , experience : Int
+    , life : Int
     , inventory : List Weapon
     , currentWeapon : Weapon
     , position : ( Int, Int )

@@ -28,7 +28,6 @@ type alias Model =
 
 type Msg
     = Direction Direction
-      --| Move
     | GenerateRoomsWidthAndHeight ( Int, Int ) NumberOfRooms InitialGeneration
     | GenerateRoom ( Int, Int ) InitialGeneration RectangularRoom
     | ConnectRooms
@@ -36,12 +35,15 @@ type Msg
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
     | AttackEnemy Enemy
     | AttackPlayer Enemy
+    | GainExperience Enemy
 
 
 init : Model
 init =
     { player =
-        { life = 100
+        { level = 2
+        , experience = 0
+        , life = 100
         , inventory = []
         , currentWeapon = Fist
         , position = ( 6, 6 )
@@ -141,8 +143,6 @@ update msg model =
             , Cmd.none
             )
 
-        --_ ->
-        --    ( model, Cmd.none )
         AttackEnemy target ->
             let
                 attacked =
@@ -153,7 +153,7 @@ update msg model =
                     | enemies =
                         List.Extra.remove target model.enemies
                   }
-                , Cmd.none
+                , Task.perform (always (GainExperience attacked)) (Task.succeed ())
                 )
 
             else
@@ -167,12 +167,15 @@ update msg model =
         AttackPlayer enemy ->
             ( { model | player = Action.hitPlayer enemy model.player }, Cmd.none )
 
+        GainExperience enemy ->
+            ( { model | player = Utils.gainExperience model.player enemy }, Cmd.none )
+
 
 addEnemyToModel : ( Int, EnemyType, RectangularRoom ) -> Model -> Model
 addEnemyToModel ( indexPos, enemyT, room ) model =
     { model
         | enemies =
-            Entity.createEnemy (List.Extra.getAt indexPos room.inner) enemyT ++ model.enemies
+            Entity.createEnemy model.player.level (List.Extra.getAt indexPos room.inner) enemyT ++ model.enemies
     }
 
 
