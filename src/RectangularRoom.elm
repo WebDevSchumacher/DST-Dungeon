@@ -1,9 +1,19 @@
-module RectangularRoom exposing (defineRectangularRoom, drawRoomFloors, drawSVGRoom, intersect, tunnelBetweenRooms)
+module RectangularRoom exposing (RectangularRoom, defineRectangularRoom, drawRoomFloors, drawSVGRoom, intersect, tunnelBetweenRooms)
 
+import Environment
 import List exposing (range)
 import Svg exposing (Svg, rect)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, width, x, x1, x2, y, y1, y2)
-import Utils exposing (Msg(..), RectangularRoom, playerBoundBox)
+
+
+type alias RectangularRoom =
+    { upperLeftCoord : ( Int, Int )
+    , width : Int
+    , height : Int
+    , downRightCoord : ( Int, Int )
+    , center : ( Int, Int )
+    , inner : List ( Int, Int )
+    }
 
 
 defineRectangularRoom : ( Int, Int ) -> Int -> Int -> RectangularRoom
@@ -52,12 +62,12 @@ intersect recr1 recr2 =
     innerIntersect recr1.upperLeftCoord recr1.downRightCoord recr2.upperLeftCoord recr2.downRightCoord
 
 
-drawSVGRoom : RectangularRoom -> List (Svg Msg)
+drawSVGRoom : RectangularRoom -> List (Svg a)
 drawSVGRoom { inner } =
     drawRoomFloors inner
 
 
-drawRoomFloors : List ( Int, Int ) -> List (Svg Msg)
+drawRoomFloors : List ( Int, Int ) -> List (Svg a)
 drawRoomFloors ls =
     case ls of
         p :: ps ->
@@ -66,8 +76,8 @@ drawRoomFloors ls =
                     rect
                         [ x (String.fromInt x1)
                         , y (String.fromInt y1)
-                        , width (String.fromInt playerBoundBox)
-                        , height (String.fromInt playerBoundBox)
+                        , width (String.fromInt Environment.playerBoundBox)
+                        , height (String.fromInt Environment.playerBoundBox)
                         , fill "white"
                         , stroke "black"
                         , strokeWidth "0.05"

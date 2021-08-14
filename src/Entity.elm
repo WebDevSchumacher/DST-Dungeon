@@ -1,4 +1,4 @@
-module Entity exposing (Enemy, EnemyType(..), pirate, troll)
+module Entity exposing (Enemy, EnemyType(..), createEnemy, pirate, troll)
 
 
 type alias Enemy =
@@ -35,3 +35,18 @@ troll position =
     , position = position
     , enemyIMG = "troll.svg"
     }
+
+
+createEnemy : Maybe ( Int, Int ) -> EnemyType -> List Enemy
+createEnemy pos enemyT =
+    case pos of
+        Just position ->
+            case enemyT of
+                Pirate ->
+                    [ pirate position ]
+
+                _ ->
+                    [ troll position ]
+
+        Nothing ->
+            []

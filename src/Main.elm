@@ -3,16 +3,19 @@ module Main exposing (..)
 import Browser
 import Browser.Events
 import Entity exposing (Enemy, EnemyType(..))
+import Environment
+import GameMap exposing (GameMap)
 import Html exposing (Attribute, Html, div, h1, text)
 import Json.Decode as Decode
-import List.Extra exposing (getAt)
+import List.Extra
+import Player exposing (Player)
 import Random
-import RectangularRoom exposing (defineRectangularRoom, drawRoomFloors, drawSVGRoom, tunnelBetweenRooms)
+import RectangularRoom exposing (RectangularRoom)
 import Svg exposing (Svg, image, line, rect, svg)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
-import Tile exposing (TileCoordinate)
-import Utils exposing (Direction(..), Msg(..), RectangularRoom, playerBoundBox, screenHeight, screenWidth)
+import Utils exposing (Direction(..), InitialGeneration, NumberOfRooms)
+import Weapon exposing (Weapon(..))
 
 
 type alias Model =
@@ -22,49 +25,14 @@ type alias Model =
     }
 
 
-type alias GameMap =
-    { width : Int
-    , height : Int
-    , rooms : List RectangularRoom
-    , walkableTiles : List ( Int, Int )
-    , tunnels : List ( Int, Int )
-    , tiles : List TileCoordinate
-    }
-
-
-type alias Damage =
-    Int
-
-
-type Weapon
-    = Fist
-    | Bow
-    | NormalSword
-    | Excalibur
-
-
-type alias Player =
-    { life : Int
-    , inventory : List Weapon
-    , currentWeapon : Weapon
-    , position : ( Int, Int )
-    }
-
-
-weaponDamage : Weapon -> Damage
-weaponDamage weapon =
-    case weapon of
-        Fist ->
-            5
-
-        Bow ->
-            10
-
-        NormalSword ->
-            15
-
-        Excalibur ->
-            40
+type Msg
+    = Direction Direction
+    | Move
+    | GenerateRoomsWidthAndHeight ( Int, Int ) NumberOfRooms InitialGeneration
+    | GenerateRoom ( Int, Int ) InitialGeneration RectangularRoom
+    | ConnectRooms
+    | SpawnEnemies (List RectangularRoom)
+    | PlaceEnemy ( Int, EnemyType, RectangularRoom )
 
 
 init : Model
@@ -76,8 +44,8 @@ init =
         , position = ( 6, 6 )
         }
     , gameMap =
-        { width = screenWidth
-        , height = screenHeight
+        { width = Environment.screenWidth
+        , height = Environment.screenHeight
         , rooms = []
         , walkableTiles = []
         , tunnels = []
@@ -166,23 +134,8 @@ addEnemyToModel : ( Int, EnemyType, RectangularRoom ) -> Model -> Model
 addEnemyToModel ( indexPos, enemyT, room ) model =
     { model
         | enemies =
-            createEnemy (List.Extra.getAt indexPos room.inner) enemyT ++ model.enemies
+            Entity.createEnemy (List.Extra.getAt indexPos room.inner) enemyT ++ model.enemies
     }
-
-
-createEnemy : Maybe ( Int, Int ) -> EnemyType -> List Enemy
-createEnemy pos enemyT =
-    case pos of
-        Just position ->
-            case enemyT of
-                Pirate ->
-                    [ Entity.pirate position ]
-
-                _ ->
-                    [ Entity.troll position ]
-
-        Nothing ->
-            []
 
 
 connectRooms : List RectangularRoom -> List ( Int, Int )
@@ -194,7 +147,7 @@ connectRooms rooms =
         r1 :: rs ->
             case List.head rs of
                 Just r2 ->
-                    tunnelBetweenRooms r1.center r2.center ++ connectRooms rs
+                    RectangularRoom.tunnelBetweenRooms r1.center r2.center ++ connectRooms rs
 
                 Nothing ->
                     []
@@ -243,16 +196,16 @@ movePoint : Direction -> ( Int, Int ) -> ( Int, Int )
 movePoint direction ( x, y ) =
     case direction of
         Left ->
-            ( x - playerBoundBox, y )
+            ( x - Environment.playerBoundBox, y )
 
         Up ->
-            ( x, y - playerBoundBox )
+            ( x, y - Environment.playerBoundBox )
 
         Right ->
-            ( x + playerBoundBox, y )
+            ( x + Environment.playerBoundBox, y )
 
         Down ->
-            ( x, y + playerBoundBox )
+            ( x, y + Environment.playerBoundBox )
 
         _ ->
             ( x, y )
@@ -293,8 +246,8 @@ tile ( px, py ) =
     rect
         [ x (String.fromInt px)
         , y (String.fromInt py)
-        , width (String.fromInt playerBoundBox)
-        , height (String.fromInt playerBoundBox)
+        , width (String.fromInt Environment.playerBoundBox)
+        , height (String.fromInt Environment.playerBoundBox)
         , fill "none"
         , stroke "black"
         , strokeWidth "1"
@@ -306,22 +259,22 @@ tile ( px, py ) =
 
 generateGridlines : List (Svg Msg)
 generateGridlines =
-    drawHorizontalGridlines playerBoundBox ++ drawVerticalGridlines playerBoundBox
+    drawHorizontalGridlines Environment.playerBoundBox ++ drawVerticalGridlines Environment.playerBoundBox
 
 
 drawHorizontalGridlines : Int -> List (Svg Msg)
 drawHorizontalGridlines height =
-    if height <= screenHeight then
+    if height <= Environment.screenHeight then
         line
             [ x1 "0"
             , y1 (String.fromInt height)
-            , x2 (String.fromInt screenWidth)
+            , x2 (String.fromInt Environment.screenWidth)
             , y2 (String.fromInt height)
             , stroke "blue"
             , strokeWidth ".05"
             ]
             []
-            :: drawHorizontalGridlines (height + playerBoundBox)
+            :: drawHorizontalGridlines (height + Environment.playerBoundBox)
 
     else
         [ text "" ]
@@ -329,17 +282,17 @@ drawHorizontalGridlines height =
 
 drawVerticalGridlines : Int -> List (Svg Msg)
 drawVerticalGridlines width =
-    if width <= screenWidth then
+    if width <= Environment.screenWidth then
         line
             [ x1 (String.fromInt width)
             , y1 "0"
             , x2 (String.fromInt width)
-            , y2 (String.fromInt screenHeight)
+            , y2 (String.fromInt Environment.screenHeight)
             , stroke "blue"
             , strokeWidth ".05"
             ]
             []
-            :: drawVerticalGridlines (width + playerBoundBox)
+            :: drawVerticalGridlines (width + Environment.playerBoundBox)
 
     else
         [ text "" ]
@@ -352,8 +305,8 @@ playerToSvg { position } =
             image
                 [ x (String.fromInt xp)
                 , y (String.fromInt yp)
-                , width (String.fromInt playerBoundBox)
-                , height (String.fromInt playerBoundBox)
+                , width (String.fromInt Environment.playerBoundBox)
+                , height (String.fromInt Environment.playerBoundBox)
                 , fill "green"
                 , xlinkHref "8-Bit-Character-1.svg"
                 ]
@@ -372,8 +325,8 @@ enemiesToSvg enemies =
                     image
                         [ x (String.fromInt (Tuple.first position))
                         , y (String.fromInt (Tuple.second position))
-                        , width (String.fromInt playerBoundBox)
-                        , height (String.fromInt playerBoundBox)
+                        , width (String.fromInt Environment.playerBoundBox)
+                        , height (String.fromInt Environment.playerBoundBox)
                         , fill "green"
                         , xlinkHref enemyIMG
                         ]
@@ -383,9 +336,9 @@ enemiesToSvg enemies =
 
 svgCanvasStyle : List (Attribute msg)
 svgCanvasStyle =
-    [ width (String.fromInt screenWidth)
-    , height (String.fromInt screenHeight)
-    , viewBox ("0 0 " ++ String.fromInt screenWidth ++ " " ++ String.fromInt screenHeight)
+    [ width (String.fromInt Environment.screenWidth)
+    , height (String.fromInt Environment.screenHeight)
+    , viewBox ("0 0 " ++ String.fromInt Environment.screenWidth ++ " " ++ String.fromInt Environment.screenHeight)
     , fill "none"
     ]
 
@@ -400,7 +353,7 @@ view model =
                 []
                 :: generateGridlines
                 -- ++ List.concat (List.map drawSVGRoom model.gameMap.rooms)
-                ++ drawRoomFloors model.gameMap.walkableTiles
+                ++ RectangularRoom.drawRoomFloors model.gameMap.walkableTiles
                 ++ playerToSvg
                     model.player
                 :: enemiesToSvg model.enemies
@@ -447,37 +400,12 @@ subscriptions model =
 ---- GENERATE ROOM ----
 
 
-roomMinWidth : Int
-roomMinWidth =
-    4
-
-
-roomMinHeight : Int
-roomMinHeight =
-    4
-
-
-roomMaxHeight : Int
-roomMaxHeight =
-    8
-
-
-roomMaxWidth : Int
-roomMaxWidth =
-    8
-
-
-numberRooms : Int
-numberRooms =
-    20
-
-
 roomGenerator : Int -> Int -> Random.Generator RectangularRoom
 roomGenerator roomWidth roomHeight =
     Random.map
         -- (\startpoint width height -> defineRectangularRoom ( 5, 5 ) width height)
-        (\startpoint -> defineRectangularRoom startpoint roomWidth roomHeight)
-        (Random.pair (Random.int 1 (screenWidth - roomWidth - 1)) (Random.int 1 (screenHeight - roomHeight - 1)))
+        (\startpoint -> RectangularRoom.defineRectangularRoom startpoint roomWidth roomHeight)
+        (Random.pair (Random.int 1 (Environment.screenWidth - roomWidth - 1)) (Random.int 1 (Environment.screenHeight - roomHeight - 1)))
 
 
 roomGen : ( Int, Int ) -> Bool -> Cmd Msg
@@ -492,7 +420,7 @@ generateRoomsWidthHeight numberOfRooms initial =
     -- before we create a room we need to generate to Width and the Height of the Room
     Random.generate
         (\roomWidthAndHeight -> GenerateRoomsWidthAndHeight roomWidthAndHeight numberOfRooms initial)
-        (Random.pair (Random.int roomMinWidth roomMaxWidth) (Random.int roomMinHeight roomMaxHeight))
+        (Random.pair (Random.int Environment.roomMinWidth Environment.roomMaxWidth) (Random.int Environment.roomMinHeight Environment.roomMaxHeight))
 
 
 
@@ -523,7 +451,7 @@ main : Program () Model Msg
 main =
     Browser.element
         { view = view
-        , init = \_ -> ( init, generateRoomsWidthHeight numberRooms True )
+        , init = \_ -> ( init, generateRoomsWidthHeight Environment.numberRooms True )
         , update = update
         , subscriptions = subscriptions
         }
