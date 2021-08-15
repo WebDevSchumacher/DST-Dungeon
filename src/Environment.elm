@@ -1,4 +1,15 @@
-module Environment exposing (numberRooms, playerBoundBox, roomMaxHeight, roomMaxWidth, roomMinHeight, roomMinWidth, screenHeight, screenWidth)
+module Environment exposing
+    ( baseExperience
+    , experienceIncreaseFactor
+    , numberRooms
+    , playerBoundBox
+    , roomMaxHeight
+    , roomMaxWidth
+    , roomMinHeight
+    , roomMinWidth
+    , screenHeight
+    , screenWidth
+    )
 
 
 roomMinWidth : Int
@@ -39,3 +50,13 @@ screenWidth =
 screenHeight : Int
 screenHeight =
     50 * playerBoundBox
+
+
+baseExperience : Float
+baseExperience =
+    300.0
+
+
+experienceIncreaseFactor : Float
+experienceIncreaseFactor =
+    1.3

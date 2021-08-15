@@ -36,6 +36,7 @@ type Msg
     | AttackEnemy Enemy
     | AttackPlayer Enemy
     | GainExperience Enemy
+    | LevelUp Player
 
 
 init : Model
@@ -168,7 +169,23 @@ update msg model =
             ( { model | player = Action.hitPlayer enemy model.player }, Cmd.none )
 
         GainExperience enemy ->
-            ( { model | player = Utils.gainExperience model.player enemy }, Cmd.none )
+            let
+                newXpPlayer =
+                    Utils.gainExperience model.player enemy
+
+                levelUp =
+                    Utils.experienceToLevelUp newXpPlayer.level <= newXpPlayer.experience
+            in
+            ( { model | player = newXpPlayer }
+            , if levelUp then
+                Task.perform (always (LevelUp newXpPlayer)) (Task.succeed ())
+
+              else
+                Cmd.none
+            )
+
+        LevelUp player ->
+            ( { model | player = Utils.levelUp model.player }, Cmd.none )
 
 
 addEnemyToModel : ( Int, EnemyType, RectangularRoom ) -> Model -> Model

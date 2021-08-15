@@ -5,6 +5,7 @@ type alias Enemy =
     { level : Int
     , lifePoints : Int
     , attackDamage : Int
+    , strengthFactor : Float
     , experience : Int
     , enemyType : EnemyType
     , position : ( Int, Int )
@@ -24,6 +25,7 @@ pirate level position =
     { level = 1
     , lifePoints = level * 10
     , attackDamage = level
+    , strengthFactor = 1.0
     , experience = level * 100
     , enemyType = Pirate
     , position = position
@@ -36,6 +38,7 @@ troll level position =
     { level = 3
     , lifePoints = level * 20
     , attackDamage = level * 2
+    , strengthFactor = 1.5
     , experience = level * 200
     , enemyType = Troll
     , position = position
