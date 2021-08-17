@@ -14,27 +14,27 @@ module Environment exposing
 
 roomMinWidth : Int
 roomMinWidth =
-    4
+    3
 
 
 roomMinHeight : Int
 roomMinHeight =
-    4
+    3
 
 
 roomMaxHeight : Int
 roomMaxHeight =
-    8
+    4
 
 
 roomMaxWidth : Int
 roomMaxWidth =
-    8
+    4
 
 
 numberRooms : Int
 numberRooms =
-    10
+    1
 
 
 playerBoundBox : Int

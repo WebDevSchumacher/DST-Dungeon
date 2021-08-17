@@ -8,6 +8,7 @@ type alias GameMap =
     { width : Int
     , height : Int
     , rooms : List RectangularRoom
+    , currentRoom : Maybe RectangularRoom
     , walkableTiles : List ( Int, Int )
     , tunnels : List ( Int, Int )
     , tiles : List TileCoordinate

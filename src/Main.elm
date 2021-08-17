@@ -28,8 +28,8 @@ type alias Model =
 
 type Msg
     = Direction Direction
-    | GenerateRoomsWidthAndHeight ( Int, Int ) NumberOfRooms InitialGeneration
-    | GenerateRoom ( Int, Int ) InitialGeneration RectangularRoom
+    | GenerateRoomWidthAndHeight ( Int, Int ) --InitialGeneration
+    | GenerateRoom ( Int, Int ) ( Int, Int ) RectangularRoom
     | ConnectRooms
     | SpawnEnemies (List RectangularRoom)
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
@@ -53,6 +53,7 @@ init =
         { width = Environment.screenWidth
         , height = Environment.screenHeight
         , rooms = []
+        , currentRoom = Nothing
         , walkableTiles = []
         , tunnels = []
         , tiles = []
@@ -75,54 +76,60 @@ update msg model =
 
                 newLocation =
                     movePoint direction model.player.position
+
+                maybeGate =
+                    case model.gameMap.currentRoom of
+                        Just room ->
+                            List.Extra.find (\gate -> gate == newLocation) room.gates
+
+                        Nothing ->
+                            Nothing
             in
-            case maybeEnemy of
-                Nothing ->
+            case maybeGate of
+                Just gate ->
+                    let
+                        _ =
+                            Debug.log "gate" gate
+                    in
                     ( { model
                         | player = movePlayer direction model
                       }
-                    , Cmd.none
+                    , generateRoomWidthHeight
                     )
 
-                Just enemy ->
-                    ( model, Task.perform (always (AttackEnemy enemy)) (Task.succeed ()) )
+                Nothing ->
+                    case maybeEnemy of
+                        Nothing ->
+                            ( { model
+                                | player = movePlayer direction model
+                              }
+                            , Cmd.none
+                            )
 
-        GenerateRoomsWidthAndHeight roomWidthAndHeight numberOfRooms initial ->
+                        Just enemy ->
+                            ( model, Task.perform (always (AttackEnemy enemy)) (Task.succeed ()) )
+
+        GenerateRoomWidthAndHeight size ->
             -- First generate the random With and Height of the Room then genereta it with (roomGen roomWidthAndHeight initial)
-            if numberOfRooms <= 0 then
-                ( model
-                , Task.perform (always ConnectRooms) (Task.succeed ())
-                )
+            ( model
+            , roomGen size ( 0, 0 )
+            )
 
-            else
-                ( model
-                , Cmd.batch
-                    [ generateRoomsWidthHeight (numberOfRooms - 1) False
-                    , roomGen roomWidthAndHeight initial
-                    ]
-                )
-
-        GenerateRoom roomWidthAndHeight initial room ->
+        GenerateRoom roomWidthAndHeight ( x, y ) room ->
             -- check if room overlaps with other rooms
             if List.any (\otherRoom -> RectangularRoom.intersect room otherRoom) model.gameMap.rooms then
-                if initial then
-                    ( model
-                    , roomGen roomWidthAndHeight True
-                    )
-
-                else
-                    ( model
-                      -- , roomGen roomWidthAndHeight False
-                    , Cmd.none
-                    )
+                ( model
+                , roomGen roomWidthAndHeight ( x, y + 1 )
+                )
 
             else
-                ( addRoom room model initial
+                ( addRoom room model
                 , Cmd.none
                 )
 
         ConnectRooms ->
-            ( addTunnelsToModel model
+            ( --addTunnelsToModel
+              model
             , Task.perform (always (SpawnEnemies model.gameMap.rooms)) (Task.succeed ())
             )
 
@@ -196,41 +203,44 @@ addEnemyToModel ( indexPos, enemyT, room ) model =
     }
 
 
-connectRooms : List RectangularRoom -> List ( Int, Int )
-connectRooms rooms =
-    case rooms of
-        [] ->
-            []
 
-        r1 :: rs ->
-            case List.head rs of
-                Just r2 ->
-                    RectangularRoom.tunnelBetweenRooms r1.center r2.center ++ connectRooms rs
+--connectRooms : List RectangularRoom -> List ( Int, Int )
+--connectRooms rooms =
+--    case rooms of
+--        [] ->
+--            []
+--
+--        r1 :: rs ->
+--            case List.head rs of
+--                Just r2 ->
+--                    RectangularRoom.tunnelBetweenRooms r1.center r2.center ++ connectRooms rs
+--
+--                Nothing ->
+--                    []
+--addTunnelsToModel : Model -> Model
+--addTunnelsToModel model =
+--    -- add connection Points to the walkable tiles in model
+--    let
+--        tunnels =
+--            connectRooms model.gameMap.rooms
+--    in
+--    case model of
+--        { gameMap } ->
+--            { model
+--                | gameMap =
+--                    { gameMap
+--                        | walkableTiles = gameMap.walkableTiles ++ tunnels
+--                        , tunnels = tunnels
+--                    }
+--            }
 
-                Nothing ->
-                    []
 
-
-addTunnelsToModel : Model -> Model
-addTunnelsToModel model =
-    -- add connection Points to the walkable tiles in model
+addRoom : RectangularRoom -> Model -> Model
+addRoom room model =
     let
-        tunnels =
-            connectRooms model.gameMap.rooms
+        _ =
+            Debug.log "room" room
     in
-    case model of
-        { gameMap } ->
-            { model
-                | gameMap =
-                    { gameMap
-                        | walkableTiles = gameMap.walkableTiles ++ tunnels
-                        , tunnels = tunnels
-                    }
-            }
-
-
-addRoom : RectangularRoom -> Model -> Bool -> Model
-addRoom room model initial =
     case model of
         { gameMap, player } ->
             case gameMap of
@@ -239,10 +249,17 @@ addRoom room model initial =
                         | gameMap =
                             { gameMap
                                 | rooms = room :: rooms
-                                , walkableTiles = gameMap.walkableTiles ++ room.inner
+                                , walkableTiles = gameMap.walkableTiles ++ room.inner ++ room.gates
+                                , currentRoom =
+                                    case gameMap.currentRoom of
+                                        Just current ->
+                                            Just current
+
+                                        Nothing ->
+                                            Just room
                             }
                         , player =
-                            if initial then
+                            if List.length gameMap.rooms == 0 then
                                 { player | position = room.center }
 
                             else
@@ -460,24 +477,65 @@ subscriptions model =
 
 roomGenerator : Int -> Int -> Random.Generator RectangularRoom
 roomGenerator roomWidth roomHeight =
+    let
+        start =
+            Random.pair (Random.int 1 (Environment.screenWidth - roomWidth - 1)) (Random.int 1 (Environment.screenHeight - roomHeight - 1))
+    in
     Random.map
-        -- (\startpoint width height -> defineRectangularRoom ( 5, 5 ) width height)
-        (\startpoint -> RectangularRoom.defineRectangularRoom startpoint roomWidth roomHeight)
-        (Random.pair (Random.int 1 (Environment.screenWidth - roomWidth - 1)) (Random.int 1 (Environment.screenHeight - roomHeight - 1)))
+        (\startpoint ->
+            let
+                _ =
+                    Debug.log "sp" startpoint
+            in
+            RectangularRoom.defineRectangularRoom startpoint roomWidth roomHeight
+        )
+        start
 
 
-roomGen : ( Int, Int ) -> Bool -> Cmd Msg
-roomGen roomWidthAndHeight initial =
-    case roomWidthAndHeight of
-        ( roomWidth, roomHeight ) ->
-            Random.generate (\p -> GenerateRoom roomWidthAndHeight initial p) (roomGenerator roomWidth roomHeight)
+
+--roomGen : ( Int, Int ) -> ( Int, Int ) -> Bool -> Cmd Msg
 
 
-generateRoomsWidthHeight : Int -> Bool -> Cmd Msg
-generateRoomsWidthHeight numberOfRooms initial =
+roomGen : ( Int, Int ) -> ( Int, Int ) -> Cmd Msg
+roomGen ( roomWidth, roomHeight ) origin =
+    let
+        p =
+            RectangularRoom.defineRectangularRoom origin roomWidth roomHeight
+    in
+    Task.perform (always (GenerateRoom ( roomWidth, roomHeight ) origin p)) (Task.succeed ())
+
+
+
+--Random.generate
+--    (\p ->
+--        let
+--            _ =
+--                Debug.log "start" p
+--        in
+--        GenerateRoom ( roomWidth, roomHeight ) initial p
+--    )
+--    (roomGenerator roomWidth roomHeight)
+
+
+generateRoomWidthHeight : Cmd Msg
+generateRoomWidthHeight =
     -- before we create a room we need to generate to Width and the Height of the Room
     Random.generate
-        (\roomWidthAndHeight -> GenerateRoomsWidthAndHeight roomWidthAndHeight numberOfRooms initial)
+        (\( width, height ) ->
+            GenerateRoomWidthAndHeight
+                -- adjust size to uneven tiles in order to place gates in centers of walls
+                ( if modBy 2 width == 0 then
+                    width + 1
+
+                  else
+                    width
+                , if modBy 2 height == 0 then
+                    height + 1
+
+                  else
+                    height
+                )
+        )
         (Random.pair (Random.int Environment.roomMinWidth Environment.roomMaxWidth) (Random.int Environment.roomMinHeight Environment.roomMaxHeight))
 
 
@@ -509,7 +567,7 @@ main : Program () Model Msg
 main =
     Browser.element
         { view = view
-        , init = \_ -> ( init, generateRoomsWidthHeight Environment.numberRooms True )
+        , init = \_ -> ( init, generateRoomWidthHeight )
         , update = update
         , subscriptions = subscriptions
         }

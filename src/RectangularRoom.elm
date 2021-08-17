@@ -13,30 +13,30 @@ type alias RectangularRoom =
     , downRightCoord : ( Int, Int )
     , center : ( Int, Int )
     , inner : List ( Int, Int )
+    , gates : List ( Int, Int )
     }
 
 
 defineRectangularRoom : ( Int, Int ) -> Int -> Int -> RectangularRoom
-defineRectangularRoom upperLeftCoord width height =
-    case upperLeftCoord of
-        ( x, y ) ->
-            let
-                x2 =
-                    x + width
+defineRectangularRoom ( x, y ) width height =
+    let
+        x2 =
+            x + width
 
-                y2 =
-                    y + height
-            in
-            { upperLeftCoord = upperLeftCoord
-            , width = width
-            , height = height
-            , downRightCoord = ( x2, y2 )
-            , center = ( floor (toFloat (x + x2) / 2), floor (toFloat (y + y2) / 2) )
+        y2 =
+            y + height
+    in
+    { upperLeftCoord = ( x, y )
+    , width = width
+    , height = height
+    , downRightCoord = ( x2, y2 )
+    , center = ( floor (toFloat (x + x2) / 2), floor (toFloat (y + y2) / 2) )
 
-            -- inner area of room as List of Points. (x , y) e.g. [(1, 0), (1, 1), (1, 2), , (2, 0) ...]
-            -- , inner = List.map2 Tuple.pair (range x x2) (range y y2)
-            , inner = pairOneWithAll x x2 (range y (y2 - 1))
-            }
+    -- inner area of room as List of Points. (x , y) e.g. [(1, 0), (1, 1), (1, 2), , (2, 0) ...]
+    -- , inner = List.map2 Tuple.pair (range x x2) (range y y2)
+    , inner = pairOneWithAll x x2 (range y (y2 - 1))
+    , gates = addGates x x2 y y2
+    }
 
 
 pairOneWithAll : Int -> Int -> List Int -> List ( Int, Int )
@@ -47,6 +47,18 @@ pairOneWithAll start end ls2 =
 
     else
         []
+
+
+addGates : Int -> Int -> Int -> Int -> List ( Int, Int )
+addGates x1 x2 y1 y2 =
+    let
+        xMid =
+            floor (toFloat (x1 + x2) / 2)
+
+        yMid =
+            floor (toFloat (y1 + y2) / 2)
+    in
+    [ ( xMid, y1 - 1 ), ( xMid, y2 ), ( x1 - 1, yMid ), ( x2, yMid ) ]
 
 
 
@@ -70,20 +82,18 @@ drawSVGRoom { inner } =
 drawRoomFloors : List ( Int, Int ) -> List (Svg a)
 drawRoomFloors ls =
     case ls of
-        p :: ps ->
-            case p of
-                ( x1, y1 ) ->
-                    rect
-                        [ x (String.fromInt x1)
-                        , y (String.fromInt y1)
-                        , width (String.fromInt Environment.playerBoundBox)
-                        , height (String.fromInt Environment.playerBoundBox)
-                        , fill "white"
-                        , stroke "black"
-                        , strokeWidth "0.05"
-                        ]
-                        []
-                        :: drawRoomFloors ps
+        ( x1, y1 ) :: ps ->
+            rect
+                [ x (String.fromInt x1)
+                , y (String.fromInt y1)
+                , width (String.fromInt Environment.playerBoundBox)
+                , height (String.fromInt Environment.playerBoundBox)
+                , fill "white"
+                , stroke "black"
+                , strokeWidth "0.05"
+                ]
+                []
+                :: drawRoomFloors ps
 
         [] ->
             []
@@ -102,10 +112,10 @@ tunnelBetweenRooms ( x1, y1 ) ( x2, by ) =
         verticalLine x1 y1 by
 
     else if y1 == by then
-        horicontalLine y1 x1 x2
+        horizontalLine y1 x1 x2
 
     else
-        horicontalLine y1 x1 x2
+        horizontalLine y1 x1 x2
             ++ verticalLine x2 y1 by
 
 
@@ -119,11 +129,11 @@ verticalLine x y0 y1 =
         List.map (\y -> ( x, y )) (List.range y0 y1)
 
 
-horicontalLine : Int -> Int -> Int -> List ( Int, Int )
-horicontalLine y x0 x1 =
+horizontalLine : Int -> Int -> Int -> List ( Int, Int )
+horizontalLine y x0 x1 =
     -- get horizontal line (use if slope is 0)
     if x1 < x0 then
-        List.reverse (horicontalLine y x1 x0)
+        List.reverse (horizontalLine y x1 x0)
 
     else
         List.map (\x -> ( x, y )) (List.range x0 x1)
