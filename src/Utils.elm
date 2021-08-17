@@ -1,33 +1,8 @@
-module Utils exposing (Direction(..), Msg(..), RectangularRoom, playerBoundBox, screenHeight, screenWidth)
+module Utils exposing (Direction(..), InitialGeneration, NumberOfRooms, experienceToLevelUp, gainExperience, levelUp)
 
-import Entity exposing (EnemyType)
-
-
-
--- 1x1 square Boundbox as player
-
-
-playerBoundBox : Int
-playerBoundBox =
-    1
-
-
-
--- number of Tiles horizontal on Screen (its not actually the screensize, screensize is scaled with css)
-
-
-screenWidth : Int
-screenWidth =
-    50 * playerBoundBox
-
-
-
---  number of Tiles vertical on Screen (its not actually the screensize, screensize is scaled with css)
-
-
-screenHeight : Int
-screenHeight =
-    42 * playerBoundBox
+import Entity exposing (Enemy)
+import Environment
+import Player exposing (Player)
 
 
 type Direction
@@ -46,21 +21,23 @@ type alias InitialGeneration =
     Bool
 
 
-type Msg
-    = Direction Direction
-    | Move
-    | GenerateRoomsWidthAndHeight ( Int, Int ) NumberOfRooms InitialGeneration
-    | GenerateRoom ( Int, Int ) InitialGeneration RectangularRoom
-    | ConnectRooms
-    | SpawnEnemies (List RectangularRoom)
-    | PlaceEnemy ( Int, EnemyType, RectangularRoom )
+gainExperience : Player -> Enemy -> Player
+gainExperience player enemy =
+    let
+        levelFactor =
+            1 - toFloat (player.level - enemy.level) / 10
+
+        xp =
+            floor (toFloat enemy.experience * levelFactor * enemy.strengthFactor)
+    in
+    { player | experience = player.experience + xp }
 
 
-type alias RectangularRoom =
-    { upperLeftCoord : ( Int, Int )
-    , width : Int
-    , height : Int
-    , downRightCoord : ( Int, Int )
-    , center : ( Int, Int )
-    , inner : List ( Int, Int )
-    }
+experienceToLevelUp : Int -> Int
+experienceToLevelUp level =
+    floor (Environment.baseExperience * Environment.experienceIncreaseFactor ^ toFloat level)
+
+
+levelUp : Player -> Player
+levelUp player =
+    { player | experience = player.experience - experienceToLevelUp player.level, level = player.level + 1 }

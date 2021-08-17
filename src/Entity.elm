@@ -1,9 +1,12 @@
-module Entity exposing (Enemy, EnemyType(..), pirate, troll)
+module Entity exposing (Enemy, EnemyType(..), createEnemy, pirate, troll)
 
 
 type alias Enemy =
-    { lifePoints : Int
+    { level : Int
+    , lifePoints : Int
     , attackDamage : Int
+    , strengthFactor : Float
+    , experience : Int
     , enemyType : EnemyType
     , position : ( Int, Int )
     , enemyIMG : String
@@ -17,21 +20,42 @@ type EnemyType
     | Pirate
 
 
-pirate : ( Int, Int ) -> Enemy
-pirate position =
-    { lifePoints = 1
-    , attackDamage = 1
+pirate : Int -> ( Int, Int ) -> Enemy
+pirate level position =
+    { level = 1
+    , lifePoints = level * 10
+    , attackDamage = level
+    , strengthFactor = 1.0
+    , experience = level * 100
     , enemyType = Pirate
     , position = position
     , enemyIMG = "pirate.svg"
     }
 
 
-troll : ( Int, Int ) -> Enemy
-troll position =
-    { lifePoints = 2
-    , attackDamage = 1
+troll : Int -> ( Int, Int ) -> Enemy
+troll level position =
+    { level = 3
+    , lifePoints = level * 20
+    , attackDamage = level * 2
+    , strengthFactor = 1.5
+    , experience = level * 200
     , enemyType = Troll
     , position = position
     , enemyIMG = "troll.svg"
     }
+
+
+createEnemy : Int -> Maybe ( Int, Int ) -> EnemyType -> List Enemy
+createEnemy level pos enemyT =
+    case pos of
+        Just position ->
+            case enemyT of
+                Pirate ->
+                    [ pirate level position ]
+
+                _ ->
+                    [ troll level position ]
+
+        Nothing ->
+            []
