@@ -1,42 +1,29 @@
-module RectangularRoom exposing (RectangularRoom, defineRectangularRoom, drawRoomFloors, drawSVGRoom, intersect, tunnelBetweenRooms)
+module RectangularRoom exposing
+    ( Gate
+    , RectangularRoom
+    , drawSVGRoom
+    , generate
+    )
 
 import Environment
-import List exposing (range)
+import List
 import Svg exposing (Svg, rect)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, width, x, x1, x2, y, y1, y2)
+import Utils exposing (Direction(..))
 
 
 type alias RectangularRoom =
-    { upperLeftCoord : ( Int, Int )
+    { location : ( Int, Int )
     , width : Int
     , height : Int
-    , downRightCoord : ( Int, Int )
     , center : ( Int, Int )
     , inner : List ( Int, Int )
-    , gates : List ( Int, Int )
+    , gates : List Gate
     }
 
 
-defineRectangularRoom : ( Int, Int ) -> Int -> Int -> RectangularRoom
-defineRectangularRoom ( x, y ) width height =
-    let
-        x2 =
-            x + width
-
-        y2 =
-            y + height
-    in
-    { upperLeftCoord = ( x, y )
-    , width = width
-    , height = height
-    , downRightCoord = ( x2, y2 )
-    , center = ( floor (toFloat (x + x2) / 2), floor (toFloat (y + y2) / 2) )
-
-    -- inner area of room as List of Points. (x , y) e.g. [(1, 0), (1, 1), (1, 2), , (2, 0) ...]
-    -- , inner = List.map2 Tuple.pair (range x x2) (range y y2)
-    , inner = pairOneWithAll x x2 (range y (y2 - 1))
-    , gates = addGates x x2 y y2
-    }
+type alias Gate =
+    { location : ( Int, Int ), direction : Direction }
 
 
 pairOneWithAll : Int -> Int -> List Int -> List ( Int, Int )
@@ -49,38 +36,29 @@ pairOneWithAll start end ls2 =
         []
 
 
-addGates : Int -> Int -> Int -> Int -> List ( Int, Int )
+addGates : Int -> Int -> Int -> Int -> List Gate
 addGates x1 x2 y1 y2 =
     let
         xMid =
-            floor (toFloat (x1 + x2) / 2)
+            x1 + (x2 // 2)
 
         yMid =
-            floor (toFloat (y1 + y2) / 2)
+            y1 + (y2 // 2)
     in
-    [ ( xMid, y1 - 1 ), ( xMid, y2 ), ( x1 - 1, yMid ), ( x2, yMid ) ]
-
-
-
--- check if Room intersect with the other Room
-
-
-intersect : RectangularRoom -> RectangularRoom -> Bool
-intersect recr1 recr2 =
-    let
-        innerIntersect ( x1, y1 ) ( x2, y2 ) ( ox1, oy1 ) ( ox2, oy2 ) =
-            x2 >= ox1 && x1 <= ox2 && y1 <= oy2 && y2 >= oy1
-    in
-    innerIntersect recr1.upperLeftCoord recr1.downRightCoord recr2.upperLeftCoord recr2.downRightCoord
+    [ { location = ( xMid, y1 - 1 ), direction = Up }
+    , { location = ( xMid, y1 + y2 ), direction = Down }
+    , { location = ( x1 - 1, yMid ), direction = Left }
+    , { location = ( x1 + x2, yMid ), direction = Right }
+    ]
 
 
 drawSVGRoom : RectangularRoom -> List (Svg a)
-drawSVGRoom { inner } =
-    drawRoomFloors inner
+drawSVGRoom room =
+    drawTiles room.inner "white" ++ drawTiles (List.map (\gate -> gate.location) room.gates) "green"
 
 
-drawRoomFloors : List ( Int, Int ) -> List (Svg a)
-drawRoomFloors ls =
+drawTiles : List ( Int, Int ) -> String -> List (Svg a)
+drawTiles ls color =
     case ls of
         ( x1, y1 ) :: ps ->
             rect
@@ -88,52 +66,33 @@ drawRoomFloors ls =
                 , y (String.fromInt y1)
                 , width (String.fromInt Environment.playerBoundBox)
                 , height (String.fromInt Environment.playerBoundBox)
-                , fill "white"
+                , fill color
                 , stroke "black"
                 , strokeWidth "0.05"
                 ]
                 []
-                :: drawRoomFloors ps
+                :: drawTiles ps color
 
         [] ->
             []
 
 
+generate : ( Int, Int ) -> Int -> Int -> RectangularRoom
+generate coordinate width height =
+    let
+        inner =
+            pairOneWithAll offsetX (offsetX + width) (List.range offsetY (offsetY + height - 1))
 
--- getSlope : ( Int, Int ) -> ( Int, Int ) -> Float
--- getSlope ( x1, y1 ) ( x2, y2 ) =
---     -- mathematical slope between two point
---     toFloat (x2 - x1) / toFloat (y2 - y1)
+        offsetX =
+            Environment.screenWidth // 2 - width // 2
 
-
-tunnelBetweenRooms : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int )
-tunnelBetweenRooms ( x1, y1 ) ( x2, by ) =
-    if x1 == x2 then
-        verticalLine x1 y1 by
-
-    else if y1 == by then
-        horizontalLine y1 x1 x2
-
-    else
-        horizontalLine y1 x1 x2
-            ++ verticalLine x2 y1 by
-
-
-verticalLine : Int -> Int -> Int -> List ( Int, Int )
-verticalLine x y0 y1 =
-    -- get vertical line (use if slope is 0)
-    if y1 < y0 then
-        List.reverse (verticalLine x y1 y0)
-
-    else
-        List.map (\y -> ( x, y )) (List.range y0 y1)
-
-
-horizontalLine : Int -> Int -> Int -> List ( Int, Int )
-horizontalLine y x0 x1 =
-    -- get horizontal line (use if slope is 0)
-    if x1 < x0 then
-        List.reverse (horizontalLine y x1 x0)
-
-    else
-        List.map (\x -> ( x, y )) (List.range x0 x1)
+        offsetY =
+            Environment.screenHeight // 2 - height // 2
+    in
+    { location = coordinate
+    , width = width
+    , height = height
+    , center = ( Environment.screenWidth // 2, Environment.screenHeight // 2 )
+    , inner = inner
+    , gates = addGates offsetX width offsetY height
+    }
