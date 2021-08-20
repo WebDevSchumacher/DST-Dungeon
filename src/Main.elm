@@ -7,6 +7,7 @@ import Entity exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
 import Html exposing (Attribute, Html, div, h1, text)
+import Html.Attributes exposing (class)
 import Json.Decode as Decode
 import List.Extra
 import Player exposing (Player)
@@ -22,7 +23,6 @@ import Weapon exposing (Weapon(..))
 type alias Model =
     { player : Player
     , gameMap : GameMap
-    , enemies : List Enemy
     , currentRoom : RectangularRoom
     , roomTransition : Maybe Direction
     }
@@ -32,7 +32,7 @@ type Msg
     = None
     | Direction Direction
     | GenerateRoomWidthAndHeight ( Int, Int ) ( Int, Int )
-    | SpawnEnemies (List RectangularRoom)
+      --| SpawnEnemies (List RectangularRoom)
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
     | AttackEnemy Enemy
     | AttackPlayer Enemy
@@ -46,10 +46,10 @@ init : Model
 init =
     let
         room =
-            RectangularRoom.generate ( 0, 0 ) 5 3
+            RectangularRoom.generate ( 0, 0 ) 3 3 1
     in
     { player =
-        { level = 2
+        { level = 1
         , experience = 0
         , life = 100
         , inventory = []
@@ -57,7 +57,6 @@ init =
         , position = room.center
         }
     , gameMap = room :: []
-    , enemies = []
     , currentRoom = room
     , roomTransition = Nothing
     }
@@ -73,9 +72,8 @@ update msg model =
         GenerateRoomWidthAndHeight location ( width, height ) ->
             let
                 room =
-                    RectangularRoom.generate location width height
+                    RectangularRoom.generate location width height model.player.level
             in
-            -- First generate the random With and Height of the Room then genereta it with (roomGen roomWidthAndHeight initial)
             ( { model | gameMap = room :: model.gameMap }
             , Task.perform (always (EnterRoom room)) (Task.succeed ())
             )
@@ -83,7 +81,7 @@ update msg model =
         Direction direction ->
             let
                 maybeEnemy =
-                    List.Extra.find (\enemy -> enemy.position == newLocation) model.enemies
+                    List.Extra.find (\enemy -> enemy.position == newLocation) model.currentRoom.enemies
 
                 newLocation =
                     movePoint direction model.player.position
@@ -126,21 +124,12 @@ update msg model =
                     , generateRoomWidthHeight roomCoords
                     )
 
-        SpawnEnemies rooms ->
-            case rooms of
-                [] ->
-                    ( model, Cmd.none )
-
-                room :: rs ->
-                    ( model
-                    , Cmd.batch
-                        [ placeEnemy room
-                        , Task.perform (always (SpawnEnemies rs)) (Task.succeed ())
-                        ]
-                    )
-
         PlaceEnemy ( indexPosition, enemyType, room ) ->
-            ( addEnemyToModel ( indexPosition, enemyType, room ) model
+            ( if not (room.location == ( 0, 0 )) then
+                addEnemyToModel ( indexPosition, enemyType, room ) model
+
+              else
+                model
             , Cmd.none
             )
 
@@ -148,22 +137,25 @@ update msg model =
             let
                 attacked =
                     Action.hitEnemy model.player.currentWeapon target
-            in
-            if attacked.lifePoints <= 0 then
-                ( { model
-                    | enemies =
-                        List.Extra.remove target model.enemies
-                  }
-                , Task.perform (always (GainExperience attacked)) (Task.succeed ())
-                )
 
-            else
-                ( { model
-                    | enemies =
-                        List.Extra.setIf (\enemy -> enemy == target) attacked model.enemies
-                  }
-                , Task.perform (always (AttackPlayer target)) (Task.succeed ())
+                updatedRoom =
+                    RectangularRoom.updateEnemies model.currentRoom target attacked
+            in
+            ( { model
+                | currentRoom = updatedRoom
+                , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom model.gameMap
+              }
+            , Task.perform
+                (always
+                    (if attacked.lifePoints <= 0 then
+                        GainExperience attacked
+
+                     else
+                        AttackPlayer target
+                    )
                 )
+                (Task.succeed ())
+            )
 
         AttackPlayer enemy ->
             ( { model | player = Action.hitPlayer enemy model.player }, Cmd.none )
@@ -203,7 +195,9 @@ update msg model =
                                 playerPos =
                                     movePoint direction gate.location
                             in
-                            ( { model | currentRoom = room, roomTransition = Nothing, player = setPlayerPosition model.player playerPos }, Cmd.none )
+                            ( { model | currentRoom = room, roomTransition = Nothing, player = setPlayerPosition model.player playerPos }
+                            , placeEnemy room
+                            )
 
                         Nothing ->
                             ( model, Cmd.none )
@@ -214,9 +208,13 @@ update msg model =
 
 addEnemyToModel : ( Int, EnemyType, RectangularRoom ) -> Model -> Model
 addEnemyToModel ( indexPos, enemyT, room ) model =
+    let
+        updatedRoom =
+            { room | enemies = Entity.createEnemy room.level (List.Extra.getAt indexPos room.inner) enemyT ++ room.enemies }
+    in
     { model
-        | enemies =
-            Entity.createEnemy model.player.level (List.Extra.getAt indexPos room.inner) enemyT ++ model.enemies
+        | currentRoom = updatedRoom
+        , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom model.gameMap
     }
 
 
@@ -236,7 +234,7 @@ addRoom room model =
 
 
 movePlayer : Direction -> Model -> Player
-movePlayer direction { player, currentRoom, enemies } =
+movePlayer direction { player, currentRoom } =
     let
         changedPlayer =
             { player
@@ -246,7 +244,7 @@ movePlayer direction { player, currentRoom, enemies } =
     if
         --outOfBounds currentRoom changedPlayer.position
         not (List.any (\walkableTile -> changedPlayer.position == walkableTile) currentRoom.inner)
-            || List.any (\enemy -> changedPlayer.position == enemy.position) enemies
+            || List.any (\enemy -> changedPlayer.position == enemy.position) currentRoom.enemies
     then
         player
 
@@ -392,16 +390,24 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text "Elm Rougelike" ]
-        , svg svgCanvasStyle
-            (rect
-                (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
-                []
-                :: generateGridlines
-                ++ RectangularRoom.drawSVGRoom model.currentRoom
-                ++ playerToSvg
-                    model.player
-                :: enemiesToSvg model.enemies
-            )
+        , div [ class "mainContainer" ]
+            [ div [ class "gameContainer" ]
+                [ svg svgCanvasStyle
+                    (rect
+                        (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
+                        []
+                        :: generateGridlines
+                        ++ RectangularRoom.drawSVGRoom model.currentRoom
+                        ++ playerToSvg
+                            model.player
+                        :: enemiesToSvg model.currentRoom.enemies
+                    )
+                ]
+            , div [ class "dialogContainer" ]
+                [ div [ class "mapContainer" ] [ h1 [] [ text "World Map" ] ]
+                , div [ class "inventoryContainer" ] [ h1 [] [ text "Inventory" ] ]
+                ]
+            ]
         ]
 
 
@@ -471,8 +477,8 @@ generateRoomWidthHeight location =
 
 
 placeEnemy : RectangularRoom -> Cmd Msg
-placeEnemy rooms =
-    Random.generate (\x -> PlaceEnemy x) (enemyGenerator rooms)
+placeEnemy room =
+    Random.generate (\x -> PlaceEnemy x) (enemyGenerator room)
 
 
 enemyGenerator : RectangularRoom -> Random.Generator ( Int, EnemyType, RectangularRoom )

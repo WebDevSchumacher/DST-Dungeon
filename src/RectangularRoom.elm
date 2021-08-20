@@ -3,10 +3,13 @@ module RectangularRoom exposing
     , RectangularRoom
     , drawSVGRoom
     , generate
+    , updateEnemies
     )
 
+import Entity exposing (Enemy)
 import Environment
 import List
+import List.Extra
 import Svg exposing (Svg, rect)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, width, x, x1, x2, y, y1, y2)
 import Utils exposing (Direction(..))
@@ -19,6 +22,8 @@ type alias RectangularRoom =
     , center : ( Int, Int )
     , inner : List ( Int, Int )
     , gates : List Gate
+    , level : Int
+    , enemies : List Enemy
     }
 
 
@@ -77,8 +82,8 @@ drawTiles ls color =
             []
 
 
-generate : ( Int, Int ) -> Int -> Int -> RectangularRoom
-generate coordinate width height =
+generate : ( Int, Int ) -> Int -> Int -> Int -> RectangularRoom
+generate coordinate width height level =
     let
         inner =
             pairOneWithAll offsetX (offsetX + width) (List.range offsetY (offsetY + height - 1))
@@ -95,4 +100,15 @@ generate coordinate width height =
     , center = ( Environment.screenWidth // 2, Environment.screenHeight // 2 )
     , inner = inner
     , gates = addGates offsetX width offsetY height
+    , level = level
+    , enemies = []
     }
+
+
+updateEnemies : RectangularRoom -> Enemy -> Enemy -> RectangularRoom
+updateEnemies room target updated =
+    if updated.lifePoints <= 0 then
+        { room | enemies = List.Extra.remove target room.enemies }
+
+    else
+        { room | enemies = List.Extra.setIf (\enemy -> enemy == target) updated room.enemies }

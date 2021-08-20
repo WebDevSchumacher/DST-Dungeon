@@ -22,7 +22,7 @@ type EnemyType
 
 pirate : Int -> ( Int, Int ) -> Enemy
 pirate level position =
-    { level = 1
+    { level = level
     , lifePoints = level * 10
     , attackDamage = level
     , strengthFactor = 1.0
@@ -35,7 +35,7 @@ pirate level position =
 
 troll : Int -> ( Int, Int ) -> Enemy
 troll level position =
-    { level = 3
+    { level = level
     , lifePoints = level * 20
     , attackDamage = level * 2
     , strengthFactor = 1.5

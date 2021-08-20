@@ -44,12 +44,12 @@ playerBoundBox =
 
 screenWidth : Int
 screenWidth =
-    40 * playerBoundBox
+    30 * playerBoundBox
 
 
 screenHeight : Int
 screenHeight =
-    40 * playerBoundBox
+    30 * playerBoundBox
 
 
 baseExperience : Float

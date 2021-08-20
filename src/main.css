@@ -11,14 +11,45 @@ rect {
   vector-effect: non-scaling-stroke;
 }
 
-svg {
-  min-width: 250px;
-  min-height: 200px;
+.mainContainer{
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-evenly;
+}
 
-  /* width: 1000px;
-  height: 800px; */
-  width: 50%;
-  height: auto;
+.dialogContainer{
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: space-evenly;
+}
+
+.gameContainer{
+  width: 50rem;
+  height: 50rem;
+  max-width: 50rem;
+  max-height: 50rem;
+  border: 0.2rem solid #000;
+}
+
+.mapContainer{
+  width: 40rem;
+  height: 20rem;
+  max-width: 40rem;
+  max-height: 20rem;
+  border: 0.2rem solid #000;
+}
+
+.inventoryContainer{
+  width: 40rem;
+  height: 20rem;
+  max-width: 40rem;
+  max-height: 20rem;
+  border: 0.2rem solid #000;
+}
+
+svg {
+  min-width: 100%;
+  min-height: 100%;
 }
 
 [data-elm-hot='true'] {
