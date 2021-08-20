@@ -5,70 +5,81 @@
   More context in the issue:
     https://github.com/halfzebra/create-elm-app/issues/320
 */
+body {
+    padding: 1rem;
+}
 
 line,
 rect {
-  vector-effect: non-scaling-stroke;
+    vector-effect: non-scaling-stroke;
 }
 
-.mainContainer{
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-evenly;
+.mainContainer {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
 }
 
-.dialogContainer{
-  display: flex;
-  flex-flow: column wrap;
-  justify-content: space-evenly;
+.dialogContainer {
+    display: flex;
+    flex-flow: column wrap;
+    justify-content: space-evenly;
 }
 
-.gameContainer{
-  width: 50rem;
-  height: 50rem;
-  max-width: 50rem;
-  max-height: 50rem;
-  border: 0.2rem solid #000;
+.gameContainer {
+    width: 50rem;
+    height: 50rem;
+    max-width: 50rem;
+    max-height: 50rem;
+    border: 0.2rem solid #000;
 }
 
-.mapContainer{
-  width: 40rem;
-  height: 20rem;
-  max-width: 40rem;
-  max-height: 20rem;
-  border: 0.2rem solid #000;
+.mapContainer {
+    width: 40rem;
+    height: 20rem;
+    max-width: 40rem;
+    max-height: 20rem;
+    border: 0.2rem solid #000;
 }
 
-.inventoryContainer{
-  width: 40rem;
-  height: 20rem;
-  max-width: 40rem;
-  max-height: 20rem;
-  border: 0.2rem solid #000;
+.inventoryContainer {
+    width: 40rem;
+    height: 20rem;
+    max-width: 40rem;
+    max-height: 20rem;
+    border: 0.2rem solid #000;
+}
+
+.statusContainer {
+    width: 40rem;
+    height: 20rem;
+    max-width: 40rem;
+    max-height: 20rem;
+    border: 0.2rem solid #000;
 }
 
 svg {
-  min-width: 100%;
-  min-height: 100%;
+    min-width: 100%;
+    min-height: 100%;
 }
 
 [data-elm-hot='true'] {
-  height: inherit;
+    height: inherit;
 }
 
 body {
-  font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande',
+    font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande',
     'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
-  margin: 0;
-  text-align: center;
-  color: #293c4b;
+    margin: 0;
+    text-align: center;
+    color: #293c4b;
 }
 
 h1 {
-  font-size: 30px;
+    font-size: 30px;
 }
 
 img {
-  margin: 20px 0;
-  max-width: 200px;
+    margin: 20px 0;
+    max-width: 200px;
 }

@@ -1,4 +1,10 @@
-module Entity exposing (Enemy, EnemyType(..), createEnemy, pirate, troll)
+module Enemy exposing
+    ( Enemy
+    , EnemyType(..)
+    , createEnemy
+    , pirate
+    , troll
+    )
 
 
 type alias Enemy =

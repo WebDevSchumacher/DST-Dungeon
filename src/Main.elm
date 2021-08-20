@@ -3,7 +3,7 @@ module Main exposing (..)
 import Action
 import Browser
 import Browser.Events
-import Entity exposing (Enemy, EnemyType(..))
+import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
 import Html exposing (Attribute, Html, div, h1, text)
@@ -16,6 +16,7 @@ import RectangularRoom exposing (Gate, RectangularRoom)
 import Svg exposing (Svg, image, line, rect, svg)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
+import Time
 import Utils exposing (Direction(..), InitialGeneration, NumberOfRooms)
 import Weapon exposing (Weapon(..))
 
@@ -25,6 +26,7 @@ type alias Model =
     , gameMap : GameMap
     , currentRoom : RectangularRoom
     , roomTransition : Maybe Direction
+    , status : Status
     }
 
 
@@ -32,7 +34,6 @@ type Msg
     = None
     | Direction Direction
     | GenerateRoomWidthAndHeight ( Int, Int ) ( Int, Int )
-      --| SpawnEnemies (List RectangularRoom)
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
     | AttackEnemy Enemy
     | AttackPlayer Enemy
@@ -40,6 +41,15 @@ type Msg
     | LevelUp Player
     | EnterGate Gate
     | EnterRoom RectangularRoom
+    | Die
+    | Tick
+    | Pause
+
+
+type Status
+    = Running
+    | Paused
+    | Dead
 
 
 init : Model
@@ -51,7 +61,7 @@ init =
     { player =
         { level = 1
         , experience = 0
-        , life = 100
+        , life = 10
         , inventory = []
         , currentWeapon = Fist
         , position = room.center
@@ -59,6 +69,7 @@ init =
     , gameMap = room :: []
     , currentRoom = room
     , roomTransition = Nothing
+    , status = Running
     }
 
 
@@ -79,31 +90,39 @@ update msg model =
             )
 
         Direction direction ->
-            let
-                maybeEnemy =
-                    List.Extra.find (\enemy -> enemy.position == newLocation) model.currentRoom.enemies
+            case model.status of
+                Running ->
+                    let
+                        maybeEnemy =
+                            List.Extra.find (\enemy -> enemy.position == newLocation) model.currentRoom.enemies
 
-                newLocation =
-                    movePoint direction model.player.position
+                        newLocation =
+                            movePoint direction model.player.position
 
-                maybeGate =
-                    List.Extra.find (\gate -> gate.location == newLocation) model.currentRoom.gates
-            in
-            case maybeGate of
-                Just gate ->
-                    ( { model | roomTransition = Just direction }, Task.perform (always (EnterGate gate)) (Task.succeed ()) )
+                        maybeGate =
+                            List.Extra.find (\gate -> gate.location == newLocation) model.currentRoom.gates
+                    in
+                    case maybeGate of
+                        Just gate ->
+                            ( { model | roomTransition = Just direction }, Task.perform (always (EnterGate gate)) (Task.succeed ()) )
 
-                Nothing ->
-                    case maybeEnemy of
                         Nothing ->
-                            ( { model
-                                | player = movePlayer direction model
-                              }
-                            , Cmd.none
-                            )
+                            case maybeEnemy of
+                                Nothing ->
+                                    ( { model
+                                        | player = movePlayer direction model
+                                      }
+                                    , Cmd.none
+                                    )
 
-                        Just enemy ->
-                            ( model, Task.perform (always (AttackEnemy enemy)) (Task.succeed ()) )
+                                Just enemy ->
+                                    ( model, Task.perform (always (AttackEnemy enemy)) (Task.succeed ()) )
+
+                Paused ->
+                    ( model, Cmd.none )
+
+                Dead ->
+                    ( model, Cmd.none )
 
         EnterGate gate ->
             let
@@ -158,7 +177,17 @@ update msg model =
             )
 
         AttackPlayer enemy ->
-            ( { model | player = Action.hitPlayer enemy model.player }, Cmd.none )
+            let
+                updatedPlayer =
+                    Action.hitPlayer enemy model.player
+            in
+            ( { model | player = updatedPlayer }
+            , if updatedPlayer.life <= 0 then
+                Task.perform (always Die) (Task.succeed ())
+
+              else
+                Cmd.none
+            )
 
         GainExperience enemy ->
             let
@@ -205,32 +234,37 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
+        Die ->
+            -- TODO: implement status change
+            ( { model | status = Dead }, Cmd.none )
+
+        Tick ->
+            updateOnTick model
+
+        Pause ->
+            ( model, Cmd.none )
+
+
+updateOnTick : Model -> ( Model, Cmd Msg )
+updateOnTick ({ currentRoom } as model) =
+    ( { model
+        | currentRoom =
+            { currentRoom | enemies = List.map (\enemy -> Action.updateEnemyOnTick enemy) currentRoom.enemies }
+      }
+    , Cmd.none
+    )
+
 
 addEnemyToModel : ( Int, EnemyType, RectangularRoom ) -> Model -> Model
 addEnemyToModel ( indexPos, enemyT, room ) model =
     let
         updatedRoom =
-            { room | enemies = Entity.createEnemy room.level (List.Extra.getAt indexPos room.inner) enemyT ++ room.enemies }
+            { room | enemies = Enemy.createEnemy room.level (List.Extra.getAt indexPos room.inner) enemyT ++ room.enemies }
     in
     { model
         | currentRoom = updatedRoom
         , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom model.gameMap
     }
-
-
-addRoom : RectangularRoom -> Model -> Model
-addRoom room model =
-    case model of
-        { gameMap, player } ->
-            { model
-                | gameMap = room :: model.gameMap
-                , player =
-                    if List.length gameMap == 0 then
-                        { player | position = room.center }
-
-                    else
-                        player
-            }
 
 
 movePlayer : Direction -> Model -> Player
@@ -282,22 +316,6 @@ outOfBounds { width, height } position =
     case position of
         ( x1, y1 ) ->
             x1 >= width || y1 >= height || x1 < 0 || y1 < 0
-
-
-tile : ( Int, Int ) -> Svg Msg
-tile ( px, py ) =
-    rect
-        [ x (String.fromInt px)
-        , y (String.fromInt py)
-        , width (String.fromInt Environment.playerBoundBox)
-        , height (String.fromInt Environment.playerBoundBox)
-        , fill "none"
-        , stroke "black"
-        , strokeWidth "1"
-
-        -- , xlinkHref "http://www-archive.mozilla.org/projects/svg/lion.svg"
-        ]
-        []
 
 
 generateGridlines : List (Svg Msg)
@@ -386,11 +404,23 @@ svgCanvasStyle =
     ]
 
 
+statusDisplay : Status -> String
+statusDisplay status =
+    case status of
+        Running ->
+            "RUNNING"
+
+        Paused ->
+            "PAUSED"
+
+        Dead ->
+            "DEAD"
+
+
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text "Elm Rougelike" ]
-        , div [ class "mainContainer" ]
+        [ div [ class "mainContainer" ]
             [ div [ class "gameContainer" ]
                 [ svg svgCanvasStyle
                     (rect
@@ -405,7 +435,9 @@ view model =
                 ]
             , div [ class "dialogContainer" ]
                 [ div [ class "mapContainer" ] [ h1 [] [ text "World Map" ] ]
-                , div [ class "inventoryContainer" ] [ h1 [] [ text "Inventory" ] ]
+
+                --, div [ class "inventoryContainer" ] [ h1 [] [ text "Inventory" ] ]
+                , div [ class "statusContainer" ] [ h1 [] [ text (statusDisplay model.status) ] ]
                 ]
             ]
         ]
@@ -415,13 +447,13 @@ view model =
 ---- SUBSCRIPTION EVENTS ----
 
 
-keyDecoder : Model -> Decode.Decoder Msg
-keyDecoder model =
-    Decode.map (toKey model) (Decode.field "key" Decode.string)
+keyDecoder : Decode.Decoder Msg
+keyDecoder =
+    Decode.map toKey (Decode.field "key" Decode.string)
 
 
-toKey : Model -> String -> Msg
-toKey model string =
+toKey : String -> Msg
+toKey string =
     case string of
         "ArrowUp" ->
             Direction Up
@@ -439,10 +471,24 @@ toKey model string =
             None
 
 
+tickSubscription : Model -> Sub Msg
+tickSubscription model =
+    case model.status of
+        Running ->
+            Time.every 100 (\_ -> Tick)
+
+        Paused ->
+            Sub.none
+
+        Dead ->
+            Sub.none
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Browser.Events.onKeyDown (keyDecoder model)
+        [ Browser.Events.onKeyDown keyDecoder
+        , tickSubscription model
         ]
 
 

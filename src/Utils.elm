@@ -8,7 +8,7 @@ module Utils exposing
     , oppositeDirection
     )
 
-import Entity exposing (Enemy)
+import Enemy exposing (Enemy)
 import Environment
 import Player exposing (Player)
 

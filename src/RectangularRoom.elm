@@ -6,7 +6,7 @@ module RectangularRoom exposing
     , updateEnemies
     )
 
-import Entity exposing (Enemy)
+import Enemy exposing (Enemy)
 import Environment
 import List
 import List.Extra
