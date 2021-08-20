@@ -1,7 +1,5 @@
 module Utils exposing
     ( Direction(..)
-    , InitialGeneration
-    , NumberOfRooms
     , experienceToLevelUp
     , gainExperience
     , levelUp
@@ -18,14 +16,6 @@ type Direction
     | Up
     | Right
     | Down
-
-
-type alias NumberOfRooms =
-    Int
-
-
-type alias InitialGeneration =
-    Bool
 
 
 oppositeDirection : Direction -> Direction

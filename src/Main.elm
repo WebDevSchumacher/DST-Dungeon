@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Action
 import Browser
@@ -17,7 +17,7 @@ import Svg exposing (Svg, image, line, rect, svg)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
 import Time
-import Utils exposing (Direction(..), InitialGeneration, NumberOfRooms)
+import Utils exposing (Direction(..))
 import Weapon exposing (Weapon(..))
 
 
@@ -235,14 +235,26 @@ update msg model =
                     ( model, Cmd.none )
 
         Die ->
-            -- TODO: implement status change
             ( { model | status = Dead }, Cmd.none )
 
         Tick ->
             updateOnTick model
 
         Pause ->
-            ( model, Cmd.none )
+            ( { model
+                | status =
+                    case model.status of
+                        Running ->
+                            Paused
+
+                        Paused ->
+                            Running
+
+                        Dead ->
+                            Dead
+              }
+            , Cmd.none
+            )
 
 
 updateOnTick : Model -> ( Model, Cmd Msg )
@@ -466,6 +478,9 @@ toKey string =
 
         "ArrowLeft" ->
             Direction Left
+
+        "p" ->
+            Pause
 
         _ ->
             None
