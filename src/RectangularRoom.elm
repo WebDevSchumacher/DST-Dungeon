@@ -1,7 +1,6 @@
 module RectangularRoom exposing
     ( Gate
     , RectangularRoom
-    , drawSVGRoom
     , generate
     , updateEnemies
     )
@@ -10,8 +9,6 @@ import Enemy exposing (Enemy)
 import Environment
 import List
 import List.Extra
-import Svg exposing (Svg, rect)
-import Svg.Attributes exposing (fill, height, stroke, strokeWidth, width, x, x1, x2, y, y1, y2)
 import Utils exposing (Direction(..))
 
 
@@ -55,31 +52,6 @@ addGates x1 x2 y1 y2 =
     , { location = ( x1 - 1, yMid ), direction = Left }
     , { location = ( x1 + x2, yMid ), direction = Right }
     ]
-
-
-drawSVGRoom : RectangularRoom -> List (Svg a)
-drawSVGRoom room =
-    drawTiles room.inner "white" ++ drawTiles (List.map (\gate -> gate.location) room.gates) "green"
-
-
-drawTiles : List ( Int, Int ) -> String -> List (Svg a)
-drawTiles ls color =
-    case ls of
-        ( x1, y1 ) :: ps ->
-            rect
-                [ x (String.fromInt x1)
-                , y (String.fromInt y1)
-                , width (String.fromInt Environment.playerBoundBox)
-                , height (String.fromInt Environment.playerBoundBox)
-                , fill color
-                , stroke "black"
-                , strokeWidth "0.05"
-                ]
-                []
-                :: drawTiles ps color
-
-        [] ->
-            []
 
 
 generate : ( Int, Int ) -> Int -> Int -> Int -> RectangularRoom

@@ -3,11 +3,13 @@ module Main exposing (main)
 import Action
 import Browser
 import Browser.Events
+import Dict exposing (Dict)
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
 import Html exposing (Attribute, Html, div, h1, text)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, id)
+import Html.Events exposing (on)
 import Json.Decode as Decode
 import List.Extra
 import Player exposing (Player)
@@ -44,12 +46,23 @@ type Msg
     | Die
     | Tick
     | Pause
+    | MouseMove Float Float
+    | Click
 
 
 type Status
     = Running
     | Paused
     | Dead
+
+
+type JsVal
+    = JsString String
+    | JsInt Int
+    | JsFloat Float
+    | JsArray (List JsVal)
+    | JsObject (Dict String JsVal)
+    | JsNull
 
 
 init : Model
@@ -256,6 +269,23 @@ update msg model =
             , Cmd.none
             )
 
+        MouseMove x y ->
+            let
+                _ =
+                    Debug.log "x" x
+
+                _ =
+                    Debug.log "y" y
+            in
+            ( model, Cmd.none )
+
+        Click ->
+            let
+                _ =
+                    Debug.log "click" "message"
+            in
+            ( model, Cmd.none )
+
 
 updateOnTick : Model -> ( Model, Cmd Msg )
 updateOnTick ({ currentRoom } as model) =
@@ -376,7 +406,8 @@ playerToSvg { position } =
     case position of
         ( xp, yp ) ->
             image
-                [ x (String.fromInt xp)
+                [ clickPlayer
+                , x (String.fromInt xp)
                 , y (String.fromInt yp)
                 , width (String.fromInt Environment.playerBoundBox)
                 , height (String.fromInt Environment.playerBoundBox)
@@ -416,6 +447,32 @@ svgCanvasStyle =
     ]
 
 
+drawSVGRoom : RectangularRoom -> List (Svg Msg)
+drawSVGRoom room =
+    drawTiles room.inner "white" ++ drawTiles (List.map (\gate -> gate.location) room.gates) "green"
+
+
+drawTiles : List ( Int, Int ) -> String -> List (Svg Msg)
+drawTiles ls color =
+    case ls of
+        ( x1, y1 ) :: ps ->
+            rect
+                [ clickTile
+                , x (String.fromInt x1)
+                , y (String.fromInt y1)
+                , width (String.fromInt Environment.playerBoundBox)
+                , height (String.fromInt Environment.playerBoundBox)
+                , fill color
+                , stroke "black"
+                , strokeWidth "0.05"
+                ]
+                []
+                :: drawTiles ps color
+
+        [] ->
+            []
+
+
 statusDisplay : Status -> String
 statusDisplay status =
     case status of
@@ -439,7 +496,7 @@ view model =
                         (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
                         []
                         :: generateGridlines
-                        ++ RectangularRoom.drawSVGRoom model.currentRoom
+                        ++ drawSVGRoom model.currentRoom
                         ++ playerToSvg
                             model.player
                         :: enemiesToSvg model.currentRoom.enemies
@@ -453,6 +510,19 @@ view model =
                 ]
             ]
         ]
+
+
+clickPlayer : Html.Attribute Msg
+clickPlayer =
+    on "click"
+        (Decode.map toClick
+            (Decode.field "target" jsValDecoder)
+        )
+
+
+clickTile : Html.Attribute Msg
+clickTile =
+    on "click" (Decode.succeed Click)
 
 
 
@@ -486,6 +556,46 @@ toKey string =
             None
 
 
+mousePositionDecoder : Decode.Decoder Msg
+mousePositionDecoder =
+    Decode.map2 toMouseMove (Decode.field "pageX" Decode.float) (Decode.field "pageY" Decode.float)
+
+
+toMouseMove : Float -> Float -> Msg
+toMouseMove x y =
+    MouseMove x y
+
+
+clickDecoder : Decode.Decoder Msg
+clickDecoder =
+    Decode.map toClick (Decode.field "target" jsValDecoder)
+
+
+jsValDecoder : Decode.Decoder JsVal
+jsValDecoder =
+    Decode.oneOf
+        [ Decode.map JsString Decode.string
+        , Decode.map JsInt Decode.int
+        , Decode.map JsFloat Decode.float
+        , Decode.list (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsArray
+        , Decode.dict (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsObject
+        , Decode.null JsNull
+        ]
+
+
+
+--(Decode.field "altKey" Decode.bool)
+
+
+toClick : JsVal -> Msg
+toClick str =
+    let
+        _ =
+            Debug.log "str" str
+    in
+    Click
+
+
 tickSubscription : Model -> Sub Msg
 tickSubscription model =
     case model.status of
@@ -503,7 +613,11 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Browser.Events.onKeyDown keyDecoder
+
+        --, Browser.Events.onMouseMove mousePositionDecoder
         , tickSubscription model
+
+        --, Browser.Events.onClick clickDecoder
         ]
 
 
