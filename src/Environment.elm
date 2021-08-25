@@ -14,27 +14,27 @@ module Environment exposing
 
 roomMinWidth : Int
 roomMinWidth =
-    4
+    10
 
 
 roomMinHeight : Int
 roomMinHeight =
-    4
+    10
 
 
 roomMaxHeight : Int
 roomMaxHeight =
-    8
+    20
 
 
 roomMaxWidth : Int
 roomMaxWidth =
-    8
+    20
 
 
 numberRooms : Int
 numberRooms =
-    10
+    1
 
 
 playerBoundBox : Int
@@ -44,12 +44,12 @@ playerBoundBox =
 
 screenWidth : Int
 screenWidth =
-    50 * playerBoundBox
+    30 * playerBoundBox
 
 
 screenHeight : Int
 screenHeight =
-    50 * playerBoundBox
+    30 * playerBoundBox
 
 
 baseExperience : Float

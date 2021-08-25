@@ -1,6 +1,10 @@
-module Action exposing (hitEnemy, hitPlayer)
+module Action exposing
+    ( hitEnemy
+    , hitPlayer
+    , updateEnemyOnTick
+    )
 
-import Entity exposing (Enemy)
+import Enemy exposing (Enemy)
 import Player exposing (Player)
 import Weapon exposing (Weapon)
 
@@ -13,3 +17,8 @@ hitEnemy weapon enemy =
 hitPlayer : Enemy -> Player -> Player
 hitPlayer enemy player =
     { player | life = player.life - enemy.attackDamage }
+
+
+updateEnemyOnTick : Enemy -> Enemy
+updateEnemyOnTick enemy =
+    enemy

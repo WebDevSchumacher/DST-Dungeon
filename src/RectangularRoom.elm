@@ -1,42 +1,34 @@
-module RectangularRoom exposing (RectangularRoom, defineRectangularRoom, drawRoomFloors, drawSVGRoom, intersect, tunnelBetweenRooms)
+module RectangularRoom exposing
+    ( Gate
+    , RectangularRoom
+    , drawSVGRoom
+    , generate
+    , updateEnemies
+    )
 
+import Enemy exposing (Enemy)
 import Environment
-import List exposing (range)
+import List
+import List.Extra
 import Svg exposing (Svg, rect)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, width, x, x1, x2, y, y1, y2)
+import Utils exposing (Direction(..))
 
 
 type alias RectangularRoom =
-    { upperLeftCoord : ( Int, Int )
+    { location : ( Int, Int )
     , width : Int
     , height : Int
-    , downRightCoord : ( Int, Int )
     , center : ( Int, Int )
     , inner : List ( Int, Int )
+    , gates : List Gate
+    , level : Int
+    , enemies : List Enemy
     }
 
 
-defineRectangularRoom : ( Int, Int ) -> Int -> Int -> RectangularRoom
-defineRectangularRoom upperLeftCoord width height =
-    case upperLeftCoord of
-        ( x, y ) ->
-            let
-                x2 =
-                    x + width
-
-                y2 =
-                    y + height
-            in
-            { upperLeftCoord = upperLeftCoord
-            , width = width
-            , height = height
-            , downRightCoord = ( x2, y2 )
-            , center = ( floor (toFloat (x + x2) / 2), floor (toFloat (y + y2) / 2) )
-
-            -- inner area of room as List of Points. (x , y) e.g. [(1, 0), (1, 1), (1, 2), , (2, 0) ...]
-            -- , inner = List.map2 Tuple.pair (range x x2) (range y y2)
-            , inner = pairOneWithAll x x2 (range y (y2 - 1))
-            }
+type alias Gate =
+    { location : ( Int, Int ), direction : Direction }
 
 
 pairOneWithAll : Int -> Int -> List Int -> List ( Int, Int )
@@ -49,81 +41,74 @@ pairOneWithAll start end ls2 =
         []
 
 
-
--- check if Room intersect with the other Room
-
-
-intersect : RectangularRoom -> RectangularRoom -> Bool
-intersect recr1 recr2 =
+addGates : Int -> Int -> Int -> Int -> List Gate
+addGates x1 x2 y1 y2 =
     let
-        innerIntersect ( x1, y1 ) ( x2, y2 ) ( ox1, oy1 ) ( ox2, oy2 ) =
-            x2 >= ox1 && x1 <= ox2 && y1 <= oy2 && y2 >= oy1
+        xMid =
+            x1 + (x2 // 2)
+
+        yMid =
+            y1 + (y2 // 2)
     in
-    innerIntersect recr1.upperLeftCoord recr1.downRightCoord recr2.upperLeftCoord recr2.downRightCoord
+    [ { location = ( xMid, y1 - 1 ), direction = Up }
+    , { location = ( xMid, y1 + y2 ), direction = Down }
+    , { location = ( x1 - 1, yMid ), direction = Left }
+    , { location = ( x1 + x2, yMid ), direction = Right }
+    ]
 
 
 drawSVGRoom : RectangularRoom -> List (Svg a)
-drawSVGRoom { inner } =
-    drawRoomFloors inner
+drawSVGRoom room =
+    drawTiles room.inner "white" ++ drawTiles (List.map (\gate -> gate.location) room.gates) "green"
 
 
-drawRoomFloors : List ( Int, Int ) -> List (Svg a)
-drawRoomFloors ls =
+drawTiles : List ( Int, Int ) -> String -> List (Svg a)
+drawTiles ls color =
     case ls of
-        p :: ps ->
-            case p of
-                ( x1, y1 ) ->
-                    rect
-                        [ x (String.fromInt x1)
-                        , y (String.fromInt y1)
-                        , width (String.fromInt Environment.playerBoundBox)
-                        , height (String.fromInt Environment.playerBoundBox)
-                        , fill "white"
-                        , stroke "black"
-                        , strokeWidth "0.05"
-                        ]
-                        []
-                        :: drawRoomFloors ps
+        ( x1, y1 ) :: ps ->
+            rect
+                [ x (String.fromInt x1)
+                , y (String.fromInt y1)
+                , width (String.fromInt Environment.playerBoundBox)
+                , height (String.fromInt Environment.playerBoundBox)
+                , fill color
+                , stroke "black"
+                , strokeWidth "0.05"
+                ]
+                []
+                :: drawTiles ps color
 
         [] ->
             []
 
 
+generate : ( Int, Int ) -> Int -> Int -> Int -> RectangularRoom
+generate coordinate width height level =
+    let
+        inner =
+            pairOneWithAll offsetX (offsetX + width) (List.range offsetY (offsetY + height - 1))
 
--- getSlope : ( Int, Int ) -> ( Int, Int ) -> Float
--- getSlope ( x1, y1 ) ( x2, y2 ) =
---     -- mathematical slope between two point
---     toFloat (x2 - x1) / toFloat (y2 - y1)
+        offsetX =
+            Environment.screenWidth // 2 - width // 2
 
-
-tunnelBetweenRooms : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int )
-tunnelBetweenRooms ( x1, y1 ) ( x2, by ) =
-    if x1 == x2 then
-        verticalLine x1 y1 by
-
-    else if y1 == by then
-        horicontalLine y1 x1 x2
-
-    else
-        horicontalLine y1 x1 x2
-            ++ verticalLine x2 y1 by
-
-
-verticalLine : Int -> Int -> Int -> List ( Int, Int )
-verticalLine x y0 y1 =
-    -- get vertical line (use if slope is 0)
-    if y1 < y0 then
-        List.reverse (verticalLine x y1 y0)
-
-    else
-        List.map (\y -> ( x, y )) (List.range y0 y1)
+        offsetY =
+            Environment.screenHeight // 2 - height // 2
+    in
+    { location = coordinate
+    , width = width
+    , height = height
+    , center = ( Environment.screenWidth // 2, Environment.screenHeight // 2 )
+    , inner = inner
+    , gates = addGates offsetX width offsetY height
+    , level = level
+    , enemies = []
+    }
 
 
-horicontalLine : Int -> Int -> Int -> List ( Int, Int )
-horicontalLine y x0 x1 =
-    -- get horizontal line (use if slope is 0)
-    if x1 < x0 then
-        List.reverse (horicontalLine y x1 x0)
+updateEnemies : RectangularRoom -> Enemy -> Enemy -> RectangularRoom
+updateEnemies room target updated =
+    if updated.lifePoints <= 0 then
+        { room | enemies = List.Extra.remove target room.enemies }
 
     else
-        List.map (\x -> ( x, y )) (List.range x0 x1)
+        { room | enemies = List.Extra.setIf (\enemy -> enemy == target) updated room.enemies }

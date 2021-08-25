@@ -1,6 +1,12 @@
-module Utils exposing (Direction(..), InitialGeneration, NumberOfRooms, experienceToLevelUp, gainExperience, levelUp)
+module Utils exposing
+    ( Direction(..)
+    , experienceToLevelUp
+    , gainExperience
+    , levelUp
+    , oppositeDirection
+    )
 
-import Entity exposing (Enemy)
+import Enemy exposing (Enemy)
 import Environment
 import Player exposing (Player)
 
@@ -10,15 +16,22 @@ type Direction
     | Up
     | Right
     | Down
-    | Other
 
 
-type alias NumberOfRooms =
-    Int
+oppositeDirection : Direction -> Direction
+oppositeDirection dir =
+    case dir of
+        Up ->
+            Down
 
+        Left ->
+            Right
 
-type alias InitialGeneration =
-    Bool
+        Right ->
+            Left
+
+        Down ->
+            Up
 
 
 gainExperience : Player -> Enemy -> Player

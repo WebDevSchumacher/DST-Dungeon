@@ -1,14 +1,24 @@
-module GameMap exposing (GameMap)
+module GameMap exposing (GameMap, roomCoords)
 
-import RectangularRoom exposing (RectangularRoom)
-import Tile exposing (TileCoordinate)
+import RectangularRoom exposing (Gate, RectangularRoom)
+import Utils exposing (Direction(..))
 
 
 type alias GameMap =
-    { width : Int
-    , height : Int
-    , rooms : List RectangularRoom
-    , walkableTiles : List ( Int, Int )
-    , tunnels : List ( Int, Int )
-    , tiles : List TileCoordinate
-    }
+    List RectangularRoom
+
+
+roomCoords : ( Int, Int ) -> Direction -> ( Int, Int )
+roomCoords ( x, y ) direction =
+    case direction of
+        Up ->
+            ( x, y - 1 )
+
+        Left ->
+            ( x - 1, y )
+
+        Right ->
+            ( x + 1, y )
+
+        Down ->
+            ( x, y + 1 )
