@@ -2,8 +2,9 @@ module Enemy exposing
     ( Enemy
     , EnemyType(..)
     , createEnemy
-    , pirate
-    , troll
+    , cyclopes
+    , mole
+    , slime
     )
 
 
@@ -23,32 +24,47 @@ type EnemyType
     = Troll
     | Orc
     | Warrior
-    | Pirate
+    | Cyclopes
+    | Slime
+    | Mole
 
 
-pirate : Int -> ( Int, Int ) -> Enemy
-pirate level position =
+slime : Int -> ( Int, Int ) -> Enemy
+slime level position =
     { level = level
     , lifePoints = level * 10
     , attackDamage = level
     , strengthFactor = 1.0
     , experience = level * 100
-    , enemyType = Pirate
+    , enemyType = Slime
     , position = position
-    , enemyIMG = "pirate.svg"
+    , enemyIMG = "assets/characters/enemies/slime/Slime_front.png"
     }
 
 
-troll : Int -> ( Int, Int ) -> Enemy
-troll level position =
+mole : Int -> ( Int, Int ) -> Enemy
+mole level position =
+    { level = level
+    , lifePoints = level * 15
+    , attackDamage = level
+    , strengthFactor = 1.1
+    , experience = level * 120
+    , enemyType = Mole
+    , position = position
+    , enemyIMG = "assets/characters/enemies/mole/Mole_front.png"
+    }
+
+
+cyclopes : Int -> ( Int, Int ) -> Enemy
+cyclopes level position =
     { level = level
     , lifePoints = level * 20
     , attackDamage = level * 2
     , strengthFactor = 1.5
     , experience = level * 200
-    , enemyType = Troll
+    , enemyType = Cyclopes
     , position = position
-    , enemyIMG = "troll.svg"
+    , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_front.png"
     }
 
 
@@ -57,11 +73,14 @@ createEnemy level pos enemyT =
     case pos of
         Just position ->
             case enemyT of
-                Pirate ->
-                    [ pirate level position ]
+                Slime ->
+                    [ slime level position ]
+
+                Mole ->
+                    [ mole level position ]
 
                 _ ->
-                    [ troll level position ]
+                    [ cyclopes level position ]
 
         Nothing ->
             []

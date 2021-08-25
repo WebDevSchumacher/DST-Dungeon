@@ -4,6 +4,7 @@ import Action
 import Browser
 import Browser.Events
 import Dict exposing (Dict)
+import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
@@ -19,7 +20,7 @@ import Svg exposing (Svg, image, line, rect, svg)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
 import Time
-import Utils exposing (Direction(..))
+import Utils
 import Weapon exposing (Weapon(..))
 
 
@@ -78,6 +79,7 @@ init =
         , inventory = []
         , currentWeapon = Fist
         , position = room.center
+        , lookDirection = Right
         }
     , gameMap = room :: []
     , currentRoom = room
@@ -315,6 +317,7 @@ movePlayer direction { player, currentRoom } =
         changedPlayer =
             { player
                 | position = movePoint direction player.position
+                , lookDirection = direction
             }
     in
     if
@@ -322,7 +325,7 @@ movePlayer direction { player, currentRoom } =
         not (List.any (\walkableTile -> changedPlayer.position == walkableTile) currentRoom.inner)
             || List.any (\enemy -> changedPlayer.position == enemy.position) currentRoom.enemies
     then
-        player
+        { player | lookDirection = direction }
 
     else
         changedPlayer
@@ -402,7 +405,24 @@ drawVerticalGridlines width =
 
 
 playerToSvg : Player -> Svg Msg
-playerToSvg { position } =
+playerToSvg { position, lookDirection } =
+    let
+        imageLink =
+            "assets/characters/player/"
+                ++ (case lookDirection of
+                        Down ->
+                            "player_front.png"
+
+                        Up ->
+                            "player_back.png"
+
+                        Left ->
+                            "player_left.png"
+
+                        Right ->
+                            "player_right.png"
+                   )
+    in
     case position of
         ( xp, yp ) ->
             image
@@ -411,8 +431,7 @@ playerToSvg { position } =
                 , y (String.fromInt yp)
                 , width (String.fromInt Environment.playerBoundBox)
                 , height (String.fromInt Environment.playerBoundBox)
-                , fill "green"
-                , xlinkHref "8-Bit-Character-1.svg"
+                , xlinkHref imageLink
                 ]
                 []
 
@@ -456,13 +475,14 @@ drawTiles : List ( Int, Int ) -> String -> List (Svg Msg)
 drawTiles ls color =
     case ls of
         ( x1, y1 ) :: ps ->
-            rect
+            image
                 [ clickTile
                 , x (String.fromInt x1)
                 , y (String.fromInt y1)
                 , width (String.fromInt Environment.playerBoundBox)
                 , height (String.fromInt Environment.playerBoundBox)
                 , fill color
+                , xlinkHref "assets/floor_1.png"
                 , stroke "black"
                 , strokeWidth "0.05"
                 ]
@@ -491,7 +511,8 @@ view model =
     div []
         [ div [ class "mainContainer" ]
             [ div [ class "gameContainer" ]
-                [ svg svgCanvasStyle
+                [ svg
+                    (id "gameCanvas" :: svgCanvasStyle)
                     (rect
                         (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
                         []
@@ -664,7 +685,7 @@ enemyGenerator room =
 
 randomEnemy : Random.Generator EnemyType
 randomEnemy =
-    Random.weighted ( 80, Pirate ) [ ( 20, Troll ) ]
+    Random.weighted ( 80, Slime ) [ ( 20, Cyclopes ), ( 40, Mole ) ]
 
 
 
