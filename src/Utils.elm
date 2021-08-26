@@ -1,21 +1,14 @@
 module Utils exposing
-    ( Direction(..)
-    , experienceToLevelUp
+    ( experienceToLevelUp
     , gainExperience
     , levelUp
     , oppositeDirection
     )
 
+import Direction exposing (Direction(..))
 import Enemy exposing (Enemy)
 import Environment
 import Player exposing (Player)
-
-
-type Direction
-    = Left
-    | Up
-    | Right
-    | Down
 
 
 oppositeDirection : Direction -> Direction

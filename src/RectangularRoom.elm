@@ -5,11 +5,11 @@ module RectangularRoom exposing
     , updateEnemies
     )
 
+import Direction exposing (Direction(..))
 import Enemy exposing (Enemy)
 import Environment
 import List
 import List.Extra
-import Utils exposing (Direction(..))
 
 
 type alias RectangularRoom =

@@ -1,7 +1,7 @@
 module GameMap exposing (GameMap, roomCoords)
 
+import Direction exposing (Direction(..))
 import RectangularRoom exposing (Gate, RectangularRoom)
-import Utils exposing (Direction(..))
 
 
 type alias GameMap =
