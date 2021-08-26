@@ -1,4 +1,4 @@
-module Direction exposing (Direction(..))
+module Direction exposing (Direction(..), changeLookDirection, directionToString, oppositeDirection)
 
 
 type Direction
@@ -6,3 +6,60 @@ type Direction
     | Up
     | Right
     | Down
+
+
+oppositeDirection : Direction -> Direction
+oppositeDirection direction =
+    case direction of
+        Left ->
+            Right
+
+        Right ->
+            Left
+
+        Up ->
+            Down
+
+        Down ->
+            Up
+
+
+directionToString : Direction -> String
+directionToString direction =
+    case direction of
+        Left ->
+            "left"
+
+        Right ->
+            "right"
+
+        Up ->
+            "up"
+
+        Down ->
+            "down"
+
+
+changeLookDirection : ( Int, Int ) -> ( Int, Int ) -> Maybe Direction
+changeLookDirection ( entityX, entityY ) ( x, y ) =
+    let
+        diffX =
+            entityX - x
+
+        diffY =
+            entityY - y
+    in
+    if entityY == y && diffX > 0 then
+        Just Left
+
+    else if entityY == y && diffX < 0 then
+        Just Right
+
+    else if entityX == x && diffY > 0 then
+        Just Up
+
+    else if entityX == x && diffY < 0 then
+        Just Down
+
+    else
+        Nothing

@@ -3,9 +3,13 @@ module Enemy exposing
     , EnemyType(..)
     , createEnemy
     , cyclopes
+    , getEmenyLookDirImg
     , mole
     , slime
+    , updateEnemyLookDirection
     )
+
+import Direction exposing (Direction(..))
 
 
 type alias Enemy =
@@ -16,6 +20,7 @@ type alias Enemy =
     , experience : Int
     , enemyType : EnemyType
     , position : ( Int, Int )
+    , lookDirection : Direction
     , enemyIMG : String
     }
 
@@ -38,7 +43,8 @@ slime level position =
     , experience = level * 100
     , enemyType = Slime
     , position = position
-    , enemyIMG = "assets/characters/enemies/slime/Slime_front.png"
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/slime/Slime_Down.png"
     }
 
 
@@ -51,7 +57,8 @@ mole level position =
     , experience = level * 120
     , enemyType = Mole
     , position = position
-    , enemyIMG = "assets/characters/enemies/mole/Mole_front.png"
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/mole/Mole_Down.png"
     }
 
 
@@ -64,7 +71,8 @@ cyclopes level position =
     , experience = level * 200
     , enemyType = Cyclopes
     , position = position
-    , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_front.png"
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_Down.png"
     }
 
 
@@ -84,3 +92,50 @@ createEnemy level pos enemyT =
 
         Nothing ->
             []
+
+
+changeLookDirImgSlime : Direction -> String
+changeLookDirImgSlime direction =
+    "assets/characters/enemies/slime/Slime_" ++ Direction.directionToString direction ++ ".png"
+
+
+changeLookDirImgCyclopes : Direction -> String
+changeLookDirImgCyclopes direction =
+    "assets/characters/enemies/cyclopes/Cyclopes_" ++ Direction.directionToString direction ++ ".png"
+
+
+changeLookDirImgMole : Direction -> String
+changeLookDirImgMole direction =
+    "assets/characters/enemies/mole/Mole_" ++ Direction.directionToString direction ++ ".png"
+
+
+updateEnemyLookDirection : Enemy -> ( Int, Int ) -> Enemy
+updateEnemyLookDirection enemy point =
+    let
+        direction =
+            Direction.changeLookDirection enemy.position point
+    in
+    case direction of
+        Just dir ->
+            { enemy
+                | lookDirection = dir
+            }
+
+        Nothing ->
+            enemy
+
+
+getEmenyLookDirImg : Enemy -> Direction -> String
+getEmenyLookDirImg enemy dir =
+    case enemy.enemyType of
+        Mole ->
+            changeLookDirImgMole dir
+
+        Cyclopes ->
+            changeLookDirImgCyclopes dir
+
+        Slime ->
+            changeLookDirImgSlime dir
+
+        _ ->
+            changeLookDirImgCyclopes dir

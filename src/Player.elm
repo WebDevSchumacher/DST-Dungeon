@@ -1,6 +1,6 @@
-module Player exposing (Player)
+module Player exposing (Player, changeImgSrc)
 
-import Direction exposing (Direction)
+import Direction exposing (Direction(..), directionToString)
 import Weapon exposing (Weapon)
 
 
@@ -11,5 +11,11 @@ type alias Player =
     , inventory : List Weapon
     , currentWeapon : Weapon
     , position : ( Int, Int )
+    , nextPositionFlag : ( Int, Int )
     , lookDirection : Direction
     }
+
+
+changeImgSrc : Direction -> String
+changeImgSrc direction =
+    "assets/characters/player/player_" ++ directionToString direction ++ ".png"

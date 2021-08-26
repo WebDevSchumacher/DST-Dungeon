@@ -3,6 +3,7 @@ module RectangularRoom exposing
     , RectangularRoom
     , generate
     , updateEnemies
+    , updateEnemyLookDirectionInRoom
     )
 
 import Direction exposing (Direction(..))
@@ -84,3 +85,11 @@ updateEnemies room target updated =
 
     else
         { room | enemies = List.Extra.setIf (\enemy -> enemy == target) updated room.enemies }
+
+
+updateEnemyLookDirectionInRoom : Enemy -> ( Int, Int ) -> RectangularRoom -> RectangularRoom
+updateEnemyLookDirectionInRoom enemy pos currentRoom =
+    { currentRoom
+        | enemies =
+            List.Extra.setIf (\en -> en.position == enemy.position) (Enemy.updateEnemyLookDirection enemy pos) currentRoom.enemies
+    }

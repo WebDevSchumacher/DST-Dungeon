@@ -1,6 +1,7 @@
 module Action exposing
     ( hitEnemy
     , hitPlayer
+    , movementDelay
     , updateEnemyOnTick
     )
 
@@ -22,3 +23,12 @@ hitPlayer enemy player =
 updateEnemyOnTick : Enemy -> Enemy
 updateEnemyOnTick enemy =
     enemy
+
+
+
+-- in millisecond
+
+
+movementDelay : Float
+movementDelay =
+    100

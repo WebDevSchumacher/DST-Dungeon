@@ -8,16 +8,17 @@ import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
-import Html exposing (Attribute, Html, div, h1, text)
+import Html exposing (Attribute, Html, div, h1, img, text)
 import Html.Attributes exposing (class, id)
 import Html.Events exposing (on)
 import Json.Decode as Decode
 import List.Extra
 import Player exposing (Player)
+import Process
 import Random
 import RectangularRoom exposing (Gate, RectangularRoom)
 import Svg exposing (Svg, image, line, rect, svg)
-import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
+import Svg.Attributes exposing (attributeName, dur, fill, from, height, stroke, strokeWidth, to, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
 import Time
 import Utils
@@ -36,6 +37,7 @@ type alias Model =
 type Msg
     = None
     | Direction Direction
+    | MovePlayer Direction
     | GenerateRoomWidthAndHeight ( Int, Int ) ( Int, Int )
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
     | AttackEnemy Enemy
@@ -48,6 +50,8 @@ type Msg
     | Tick
     | Pause
     | MouseMove Float Float
+    | TileClick ( Int, Int )
+    | TileMouseOver ( Int, Int )
     | Click
 
 
@@ -79,9 +83,10 @@ init =
         , inventory = []
         , currentWeapon = Fist
         , position = room.center
+        , nextPositionFlag = room.center
         , lookDirection = Right
         }
-    , gameMap = room :: []
+    , gameMap = [ room ]
     , currentRoom = room
     , roomTransition = Nothing
     , status = Running
@@ -90,6 +95,17 @@ init =
 
 
 ---- UPDATE ----
+
+
+delayCmdMsg : Float -> Msg -> Cmd Msg
+delayCmdMsg time msg =
+    Process.sleep time
+        |> Task.perform (\_ -> msg)
+
+
+msgToCmdMsg : Msg -> Cmd Msg
+msgToCmdMsg msg =
+    Task.perform (always msg) (Task.succeed ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,7 +117,14 @@ update msg model =
                     RectangularRoom.generate location width height model.player.level
             in
             ( { model | gameMap = room :: model.gameMap }
-            , Task.perform (always (EnterRoom room)) (Task.succeed ())
+            , msgToCmdMsg (EnterRoom room)
+            )
+
+        MovePlayer direction ->
+            ( { model
+                | player = movePlayer direction model
+              }
+            , Cmd.none
             )
 
         Direction direction ->
@@ -119,19 +142,37 @@ update msg model =
                     in
                     case maybeGate of
                         Just gate ->
-                            ( { model | roomTransition = Just direction }, Task.perform (always (EnterGate gate)) (Task.succeed ()) )
+                            ( { model | roomTransition = Just direction }, msgToCmdMsg (EnterGate gate) )
 
                         Nothing ->
                             case maybeEnemy of
                                 Nothing ->
-                                    ( { model
-                                        | player = movePlayer direction model
-                                      }
-                                    , Cmd.none
-                                    )
+                                    let
+                                        nextPosFlag =
+                                            movePoint direction model.player.position
+                                    in
+                                    -- this is so then player cant spam move
+                                    if model.player.nextPositionFlag == model.player.position && not (isPlayerPostionValid nextPosFlag model.currentRoom) then
+                                        let
+                                            player =
+                                                model.player
+                                        in
+                                        ( { model
+                                            | player =
+                                                { player
+                                                    | nextPositionFlag = movePoint direction player.position
+                                                }
+                                          }
+                                        , delayCmdMsg Action.movementDelay (MovePlayer direction)
+                                        )
+
+                                    else
+                                        ( updatePlayerLookDirectionDirect model direction
+                                        , Cmd.none
+                                        )
 
                                 Just enemy ->
-                                    ( model, Task.perform (always (AttackEnemy enemy)) (Task.succeed ()) )
+                                    ( model, msgToCmdMsg (AttackEnemy enemy) )
 
                 Paused ->
                     ( model, Cmd.none )
@@ -150,7 +191,7 @@ update msg model =
             case maybeRoom of
                 Just room ->
                     ( model
-                    , Task.perform (always (EnterRoom room)) (Task.succeed ())
+                    , msgToCmdMsg (EnterRoom room)
                     )
 
                 Nothing ->
@@ -175,30 +216,35 @@ update msg model =
                 updatedRoom =
                     RectangularRoom.updateEnemies model.currentRoom target attacked
             in
-            ( { model
-                | currentRoom = updatedRoom
-                , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom model.gameMap
-              }
-            , Task.perform
-                (always
-                    (if attacked.lifePoints <= 0 then
-                        GainExperience attacked
+            ( updatePlayerLookDirection
+                { model
+                    | currentRoom = updatedRoom
+                    , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom model.gameMap
+                }
+                target.position
+            , msgToCmdMsg
+                (if attacked.lifePoints <= 0 then
+                    GainExperience attacked
 
-                     else
-                        AttackPlayer target
-                    )
+                 else
+                    AttackPlayer attacked
                 )
-                (Task.succeed ())
             )
 
         AttackPlayer enemy ->
             let
                 updatedPlayer =
                     Action.hitPlayer enemy model.player
+
+                newRoom =
+                    RectangularRoom.updateEnemyLookDirectionInRoom enemy model.player.position model.currentRoom
             in
-            ( { model | player = updatedPlayer }
+            ( { model
+                | player = updatedPlayer
+                , currentRoom = newRoom
+              }
             , if updatedPlayer.life <= 0 then
-                Task.perform (always Die) (Task.succeed ())
+                msgToCmdMsg Die
 
               else
                 Cmd.none
@@ -214,7 +260,7 @@ update msg model =
             in
             ( { model | player = newXpPlayer }
             , if levelUp then
-                Task.perform (always (LevelUp newXpPlayer)) (Task.succeed ())
+                msgToCmdMsg (LevelUp newXpPlayer)
 
               else
                 Cmd.none
@@ -238,8 +284,20 @@ update msg model =
                             let
                                 playerPos =
                                     movePoint direction gate.location
+
+                                player =
+                                    model.player
                             in
-                            ( { model | currentRoom = room, roomTransition = Nothing, player = setPlayerPosition model.player playerPos }
+                            ( { model
+                                | currentRoom = room
+                                , roomTransition = Nothing
+                                , player =
+                                    { player
+                                        | position = playerPos
+                                        , nextPositionFlag = playerPos
+                                        , lookDirection = Direction.oppositeDirection gate.direction
+                                    }
+                              }
                             , placeEnemy room
                             )
 
@@ -288,6 +346,41 @@ update msg model =
             in
             ( model, Cmd.none )
 
+        TileClick point ->
+            ( updatePlayerLookDirection model point, Cmd.none )
+
+        TileMouseOver point ->
+            ( model, Cmd.none )
+
+
+updatePlayerLookDirectionDirect : Model -> Direction -> Model
+updatePlayerLookDirectionDirect ({ player } as model) dir =
+    { model
+        | player =
+            { player
+                | lookDirection = dir
+            }
+    }
+
+
+updatePlayerLookDirection : Model -> ( Int, Int ) -> Model
+updatePlayerLookDirection ({ player } as model) point =
+    let
+        direction =
+            Direction.changeLookDirection player.position point
+    in
+    case direction of
+        Just dir ->
+            { model
+                | player =
+                    { player
+                        | lookDirection = dir
+                    }
+            }
+
+        Nothing ->
+            model
+
 
 updateOnTick : Model -> ( Model, Cmd Msg )
 updateOnTick ({ currentRoom } as model) =
@@ -322,13 +415,20 @@ movePlayer direction { player, currentRoom } =
     in
     if
         --outOfBounds currentRoom changedPlayer.position
-        not (List.any (\walkableTile -> changedPlayer.position == walkableTile) currentRoom.inner)
-            || List.any (\enemy -> changedPlayer.position == enemy.position) currentRoom.enemies
+        isPlayerPostionValid changedPlayer.position currentRoom
     then
-        { player | lookDirection = direction }
+        { player
+            | lookDirection = direction
+        }
 
     else
         changedPlayer
+
+
+isPlayerPostionValid : ( Int, Int ) -> RectangularRoom -> Bool
+isPlayerPostionValid position currentRoom =
+    not (List.any (\walkableTile -> position == walkableTile) currentRoom.inner)
+        || List.any (\enemy -> position == enemy.position) currentRoom.enemies
 
 
 setPlayerPosition : Player -> ( Int, Int ) -> Player
@@ -408,20 +508,7 @@ playerToSvg : Player -> Svg Msg
 playerToSvg { position, lookDirection } =
     let
         imageLink =
-            "assets/characters/player/"
-                ++ (case lookDirection of
-                        Down ->
-                            "player_front.png"
-
-                        Up ->
-                            "player_back.png"
-
-                        Left ->
-                            "player_left.png"
-
-                        Right ->
-                            "player_right.png"
-                   )
+            Player.changeImgSrc lookDirection
     in
     case position of
         ( xp, yp ) ->
@@ -443,15 +530,19 @@ enemiesToSvg enemies =
             []
 
         em :: ems ->
+            let
+                imgSrc =
+                    Enemy.getEmenyLookDirImg em em.lookDirection
+            in
             case em of
-                { position, enemyIMG } ->
+                { position } ->
                     image
                         [ x (String.fromInt (Tuple.first position))
                         , y (String.fromInt (Tuple.second position))
                         , width (String.fromInt Environment.playerBoundBox)
                         , height (String.fromInt Environment.playerBoundBox)
                         , fill "green"
-                        , xlinkHref enemyIMG
+                        , xlinkHref imgSrc
                         ]
                         []
                         :: enemiesToSvg ems
@@ -476,7 +567,8 @@ drawTiles ls color =
     case ls of
         ( x1, y1 ) :: ps ->
             image
-                [ clickTile
+                [ clickTile ( x1, y1 )
+                , mouseoverTile ( x1, y1 )
                 , x (String.fromInt x1)
                 , y (String.fromInt y1)
                 , width (String.fromInt Environment.playerBoundBox)
@@ -513,6 +605,22 @@ view model =
             [ div [ class "gameContainer" ]
                 [ svg
                     (id "gameCanvas" :: svgCanvasStyle)
+                    --[   rect
+                    --     [ x "3"
+                    --     , y "20"
+                    --     , width (String.fromInt Environment.playerBoundBox)
+                    --     , height (String.fromInt Environment.playerBoundBox)
+                    --     , fill "red"
+                    --     ]
+                    --     [ Svg.animate
+                    --         [ attributeName "y"
+                    --         , from "3"
+                    --         , to "20"
+                    --         , dur "3s"
+                    --         ]
+                    --         []
+                    --     ][
+                    --]
                     (rect
                         (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
                         []
@@ -541,9 +649,14 @@ clickPlayer =
         )
 
 
-clickTile : Html.Attribute Msg
-clickTile =
-    on "click" (Decode.succeed Click)
+clickTile : ( Int, Int ) -> Html.Attribute Msg
+clickTile point =
+    on "click" (Decode.succeed (TileClick point))
+
+
+mouseoverTile : ( Int, Int ) -> Html.Attribute Msg
+mouseoverTile point =
+    on "mousehover" (Decode.succeed (TileMouseOver point))
 
 
 
@@ -621,7 +734,7 @@ tickSubscription : Model -> Sub Msg
 tickSubscription model =
     case model.status of
         Running ->
-            Time.every 100 (\_ -> Tick)
+            Time.every 400 (\_ -> Tick)
 
         Paused ->
             Sub.none
