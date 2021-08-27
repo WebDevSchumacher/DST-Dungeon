@@ -3,6 +3,7 @@ module Action exposing
     , hitPlayer
     , movementDelay
     , updateEnemyOnTick
+    , walkingDuration
     )
 
 import Enemy exposing (Enemy)
@@ -31,4 +32,9 @@ updateEnemyOnTick enemy =
 
 movementDelay : Float
 movementDelay =
-    100
+    0
+
+
+walkingDuration : Float
+walkingDuration =
+    400

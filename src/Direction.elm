@@ -1,4 +1,4 @@
-module Direction exposing (Direction(..), changeLookDirection, directionToString, oppositeDirection)
+module Direction exposing (Direction(..), changeLookDirection, directionToString, getViewBoxFromDirection, oppositeDirection)
 
 
 type Direction
@@ -63,3 +63,19 @@ changeLookDirection ( entityX, entityY ) ( x, y ) =
 
     else
         Nothing
+
+
+getViewBoxFromDirection : Direction -> String
+getViewBoxFromDirection dir =
+    case dir of
+        Down ->
+            "0 0 1 1"
+
+        Up ->
+            "1 0 1 1"
+
+        Left ->
+            "2 0 1 1"
+
+        Right ->
+            "3 0 1 1"

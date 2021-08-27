@@ -4,7 +4,7 @@ import Action
 import Browser
 import Browser.Events
 import Dict exposing (Dict)
-import Direction exposing (Direction(..))
+import Direction exposing (Direction(..), changeLookDirection)
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
@@ -13,12 +13,15 @@ import Html.Attributes exposing (class, id)
 import Html.Events exposing (on)
 import Json.Decode as Decode
 import List.Extra
-import Player exposing (Player)
+import Player exposing (Player, PlayerStatus(..))
 import Process
 import Random
 import RectangularRoom exposing (Gate, RectangularRoom)
-import Svg exposing (Svg, image, line, rect, svg)
-import Svg.Attributes exposing (attributeName, dur, fill, from, height, stroke, strokeWidth, to, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
+import Simple.Animation as Animation exposing (Animation)
+import Simple.Animation.Animated as Animated
+import Simple.Animation.Property as P
+import Svg exposing (Svg, g, image, line, rect, svg)
+import Svg.Attributes exposing (attributeName, dur, enableBackground, fill, from, height, opacity, repeatCount, stroke, strokeWidth, to, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
 import Time
 import Utils
@@ -37,7 +40,7 @@ type alias Model =
 type Msg
     = None
     | Direction Direction
-    | MovePlayer Direction
+    | PlayerStatusToStanding
     | GenerateRoomWidthAndHeight ( Int, Int ) ( Int, Int )
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
     | AttackEnemy Enemy
@@ -83,8 +86,9 @@ init =
         , inventory = []
         , currentWeapon = Fist
         , position = room.center
-        , nextPositionFlag = room.center
-        , lookDirection = Right
+        , prevPosition = room.center
+        , lookDirection = Down
+        , playerStatus = Standing
         }
     , gameMap = [ room ]
     , currentRoom = room
@@ -120,9 +124,9 @@ update msg model =
             , msgToCmdMsg (EnterRoom room)
             )
 
-        MovePlayer direction ->
+        PlayerStatusToStanding ->
             ( { model
-                | player = movePlayer direction model
+                | player = model.player |> Player.playerStatusToStanding
               }
             , Cmd.none
             )
@@ -147,29 +151,11 @@ update msg model =
                         Nothing ->
                             case maybeEnemy of
                                 Nothing ->
-                                    let
-                                        nextPosFlag =
-                                            movePoint direction model.player.position
-                                    in
-                                    -- this is so then player cant spam move
-                                    if model.player.nextPositionFlag == model.player.position && not (isPlayerPostionValid nextPosFlag model.currentRoom) then
-                                        let
-                                            player =
-                                                model.player
-                                        in
-                                        ( { model
-                                            | player =
-                                                { player
-                                                    | nextPositionFlag = movePoint direction player.position
-                                                }
-                                          }
-                                        , delayCmdMsg Action.movementDelay (MovePlayer direction)
-                                        )
-
-                                    else
-                                        ( updatePlayerLookDirectionDirect model direction
-                                        , Cmd.none
-                                        )
+                                    ( { model
+                                        | player = movePlayer direction model
+                                      }
+                                    , delayCmdMsg Action.walkingDuration PlayerStatusToStanding
+                                    )
 
                                 Just enemy ->
                                     ( model, msgToCmdMsg (AttackEnemy enemy) )
@@ -294,7 +280,7 @@ update msg model =
                                 , player =
                                     { player
                                         | position = playerPos
-                                        , nextPositionFlag = playerPos
+                                        , prevPosition = playerPos
                                         , lookDirection = Direction.oppositeDirection gate.direction
                                     }
                               }
@@ -409,8 +395,10 @@ movePlayer direction { player, currentRoom } =
     let
         changedPlayer =
             { player
-                | position = movePoint direction player.position
+                | prevPosition = player.position
+                , position = movePoint direction player.position
                 , lookDirection = direction
+                , playerStatus = Walking
             }
     in
     if
@@ -505,22 +493,67 @@ drawVerticalGridlines width =
 
 
 playerToSvg : Player -> Svg Msg
-playerToSvg { position, lookDirection } =
+playerToSvg { position, prevPosition, lookDirection, playerStatus } =
     let
-        imageLink =
-            Player.changeImgSrc lookDirection
+        idStr =
+            "player_" ++ Player.playerStatusToString playerStatus ++ "_" ++ Direction.directionToString lookDirection
+
+        vwBox =
+            Direction.getViewBoxFromDirection lookDirection
     in
     case position of
         ( xp, yp ) ->
-            image
-                [ clickPlayer
-                , x (String.fromInt xp)
-                , y (String.fromInt yp)
-                , width (String.fromInt Environment.playerBoundBox)
-                , height (String.fromInt Environment.playerBoundBox)
-                , xlinkHref imageLink
-                ]
+            animatedG
+                (walkAnim
+                    prevPosition
+                    position
+                )
                 []
+                [ svg
+                    [ --  x (String.fromInt xp)
+                      -- , y (String.fromInt yp)
+                      width (String.fromInt Environment.playerBoundBox)
+                    , viewBox vwBox
+                    , height (String.fromInt Environment.playerBoundBox)
+                    ]
+                    [ image
+                        [ clickPlayer
+                        , id idStr
+                        , width (String.fromInt (Environment.playerBoundBox * 4))
+                        , xlinkHref "assets/characters/player/Walk.png"
+                        ]
+                        []
+                    ]
+                ]
+
+
+
+-- Simple animation usage
+
+
+walkAnim : ( Int, Int ) -> ( Int, Int ) -> Animation
+walkAnim ( prevX, prevY ) ( x, y ) =
+    Animation.steps
+        { startAt = [ P.x (toFloat prevX), P.y (toFloat prevY) ]
+        , options = [ Animation.linear ]
+        }
+        [ Animation.step (round Action.walkingDuration) [ P.x (toFloat x), P.y (toFloat y) ]
+        ]
+
+
+animatedG : Animation -> List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg
+animatedG =
+    animatedSvg Svg.g
+
+
+animatedSvg =
+    Animated.svg
+        { class = Svg.Attributes.class
+        }
+
+
+
+----
 
 
 enemiesToSvg : List Enemy -> List (Svg Msg)
@@ -746,7 +779,11 @@ tickSubscription model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Browser.Events.onKeyDown keyDecoder
+        [ if not (model.player.playerStatus == Walking) then
+            Browser.Events.onKeyDown keyDecoder
+
+          else
+            Sub.none
 
         --, Browser.Events.onMouseMove mousePositionDecoder
         , tickSubscription model

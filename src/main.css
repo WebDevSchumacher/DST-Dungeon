@@ -5,6 +5,35 @@
   More context in the issue:
     https://github.com/halfzebra/create-elm-app/issues/320
 */
+
+/* Styling for animation and pixelart*/
+
+#player_Walking_down,
+#player_Walking_up,
+#player_Walking_left,
+#player_Walking_right {
+  animation: moveSpritePlayer 0.3s steps(4) infinite;
+  image-rendering: pixelated;
+}
+
+@keyframes moveSpritePlayer {
+  from {
+    tranform: translate3d(0, 0px, 0);
+  }
+
+  to {
+    transform: translate3d(0, -400%, 0);
+  }
+}
+
+#player_Standing_down,
+#player_Standing_up,
+#player_Standing_left,
+#player_Standing_right {
+  image-rendering: pixelated;
+}
+/*  */
+
 body {
   padding: 1rem;
 }
@@ -79,7 +108,7 @@ h1 {
   font-size: 30px;
 }
 
-img {
+/* img {
   margin: 20px 0;
   max-width: 200px;
-}
+} */
