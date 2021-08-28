@@ -3,7 +3,6 @@ module Main exposing (main)
 import Action
 import Browser
 import Browser.Events
-import Dict exposing (Dict)
 import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
@@ -64,13 +63,15 @@ type Status
     | Dead
 
 
-type JsVal
-    = JsString String
-    | JsInt Int
-    | JsFloat Float
-    | JsArray (List JsVal)
-    | JsObject (Dict String JsVal)
-    | JsNull
+
+--
+--type JsVal
+--    = JsString String
+--    | JsInt Int
+--    | JsFloat Float
+--    | JsArray (List JsVal)
+--    | JsObject (Dict String JsVal)
+--    | JsNull
 
 
 init : Model
@@ -115,7 +116,6 @@ msgToCmdMsg msg =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-
         GenerateObstacles location size obstacles ->
             if List.length obstacles < Environment.wallCount then
                 ( model, generateObstacleCoord location size obstacles )
@@ -128,7 +128,6 @@ update msg model =
                 ( { model | gameMap = room :: model.gameMap }
                 , Task.perform (always (EnterRoom room)) (Task.succeed ())
                 )
-
 
         PlayerStatusToStanding ->
             ( { model
@@ -368,7 +367,7 @@ updateOnTick : Model -> ( Model, Cmd Msg )
 updateOnTick ({ currentRoom } as model) =
     ( { model
         | currentRoom =
-            { currentRoom | enemies = List.map (\enemy -> Action.updateEnemyOnTick enemy) currentRoom.enemies }
+            { currentRoom | enemies = List.map (\enemy -> Action.updateEnemyOnTick enemy model.player model.currentRoom) currentRoom.enemies }
       }
     , Cmd.none
     )
@@ -511,8 +510,7 @@ playerToSvg { position, prevPosition, lookDirection, playerStatus } =
             , height (String.fromInt Environment.playerBoundBox)
             ]
             [ image
-                [ clickPlayer
-                , id idStr
+                [ id idStr
                 , width widthIMG
                 , xlinkHref srcLink
                 ]
@@ -560,7 +558,7 @@ enemiesToSvg enemies =
         em :: ems ->
             let
                 imgSrc =
-                    Enemy.getEmenyLookDirImg em em.lookDirection
+                    Enemy.getEnemyLookDirImg em em.lookDirection
             in
             case em of
                 { position } ->
@@ -587,11 +585,13 @@ svgCanvasStyle =
 
 drawSVGRoom : RectangularRoom -> List (Svg Msg)
 drawSVGRoom room =
-    drawTiles room.inner "white" ++ drawTiles (List.map (\gate -> gate.location) room.gates) "green"
+    drawTiles room.inner Environment.floorAssetPath
+        ++ drawTiles (List.map (\gate -> gate.location) room.gates) Environment.gateAssetPath
+        ++ drawTiles room.walls Environment.wallAssetPath
 
 
 drawTiles : List ( Int, Int ) -> String -> List (Svg Msg)
-drawTiles ls color =
+drawTiles ls path =
     case ls of
         ( x1, y1 ) :: ps ->
             image
@@ -601,13 +601,12 @@ drawTiles ls color =
                 , y (String.fromInt y1)
                 , width (String.fromInt Environment.playerBoundBox)
                 , height (String.fromInt Environment.playerBoundBox)
-                , fill color
-                , xlinkHref "assets/floor_1.png"
+                , xlinkHref path
                 , stroke "black"
                 , strokeWidth "0.05"
                 ]
                 []
-                :: drawTiles ps color
+                :: drawTiles ps path
 
         [] ->
             []
@@ -653,12 +652,13 @@ view model =
         ]
 
 
-clickPlayer : Html.Attribute Msg
-clickPlayer =
-    on "click"
-        (Decode.map toClick
-            (Decode.field "target" jsValDecoder)
-        )
+
+--clickPlayer : Html.Attribute Msg
+--clickPlayer =
+--    on "click"
+--        (Decode.map toClick
+--            (Decode.field "target" jsValDecoder)
+--        )
 
 
 clickTile : ( Int, Int ) -> Html.Attribute Msg
@@ -707,29 +707,25 @@ toMouseMove x y =
     MouseMove x y
 
 
-jsValDecoder : Decode.Decoder JsVal
-jsValDecoder =
-    Decode.oneOf
-        [ Decode.map JsString Decode.string
-        , Decode.map JsInt Decode.int
-        , Decode.map JsFloat Decode.float
-        , Decode.list (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsArray
-        , Decode.dict (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsObject
-        , Decode.null JsNull
-        ]
 
-
-
+--jsValDecoder : Decode.Decoder JsVal
+--jsValDecoder =
+--    Decode.oneOf
+--        [ Decode.map JsString Decode.string
+--        , Decode.map JsInt Decode.int
+--        , Decode.map JsFloat Decode.float
+--        , Decode.list (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsArray
+--        , Decode.dict (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsObject
+--        , Decode.null JsNull
+--        ]
 --(Decode.field "altKey" Decode.bool)
-
-
-toClick : JsVal -> Msg
-toClick str =
-    let
-        _ =
-            Debug.log "str" str
-    in
-    Click
+--toClick : JsVal -> Msg
+--toClick str =
+--    let
+--        _ =
+--            Debug.log "str" str
+--    in
+--    Click
 
 
 tickSubscription : Model -> Sub Msg

@@ -3,7 +3,7 @@ module Enemy exposing
     , EnemyType(..)
     , createEnemy
     , cyclopes
-    , getEmenyLookDirImg
+    , getEnemyLookDirImg
     , mole
     , slime
     , updateEnemyLookDirection
@@ -125,8 +125,8 @@ updateEnemyLookDirection enemy point =
             enemy
 
 
-getEmenyLookDirImg : Enemy -> Direction -> String
-getEmenyLookDirImg enemy dir =
+getEnemyLookDirImg : Enemy -> Direction -> String
+getEnemyLookDirImg enemy dir =
     case enemy.enemyType of
         Mole ->
             changeLookDirImgMole dir

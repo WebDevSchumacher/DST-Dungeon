@@ -1,6 +1,8 @@
 module Environment exposing
     ( baseExperience
     , experienceIncreaseFactor
+    , floorAssetPath
+    , gateAssetPath
     , numberRooms
     , playerBoundBox
     , roomMaxHeight
@@ -9,6 +11,7 @@ module Environment exposing
     , roomMinWidth
     , screenHeight
     , screenWidth
+    , wallAssetPath
     , wallCount
     , wallLength
     )
@@ -72,3 +75,18 @@ wallCount =
 wallLength : Int
 wallLength =
     7
+
+
+floorAssetPath : String
+floorAssetPath =
+    "assets/floor_1.png"
+
+
+wallAssetPath : String
+wallAssetPath =
+    "assets/wall_1.png"
+
+
+gateAssetPath : String
+gateAssetPath =
+    "assets/gate_1.png"
