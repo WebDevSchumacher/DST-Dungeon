@@ -41,8 +41,8 @@ type alias Model =
 type Msg
     = None
     | Direction Direction
+    | GenerateObstacles ( Int, Int ) ( Int, Int ) (List ( Int, Int ))
     | PlayerStatusToStanding
-    | GenerateRoomWidthAndHeight ( Int, Int ) ( Int, Int )
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
     | AttackEnemy Enemy
     | AttackPlayer Enemy
@@ -78,7 +78,7 @@ init : Model
 init =
     let
         room =
-            RectangularRoom.generate ( 0, 0 ) 3 3 1
+            RectangularRoom.generate ( 0, 0 ) ( 3, 3 ) [] 1
     in
     { player =
         { level = 1
@@ -117,14 +117,20 @@ msgToCmdMsg msg =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GenerateRoomWidthAndHeight location ( width, height ) ->
-            let
-                room =
-                    RectangularRoom.generate location width height model.player.level
-            in
-            ( { model | gameMap = room :: model.gameMap }
-            , msgToCmdMsg (EnterRoom room)
-            )
+
+        GenerateObstacles location size obstacles ->
+            if List.length obstacles < Environment.wallCount then
+                ( model, generateObstacleCoord location size obstacles )
+
+            else
+                let
+                    room =
+                        RectangularRoom.generate location size obstacles model.player.level
+                in
+                ( { model | gameMap = room :: model.gameMap }
+                , Task.perform (always (EnterRoom room)) (Task.succeed ())
+                )
+
 
         PlayerStatusToStanding ->
             ( { model
@@ -860,7 +866,7 @@ generateRoomWidthHeight location =
     -- before we create a room we need to generate to Width and the Height of the Room
     Random.generate
         (\( width, height ) ->
-            GenerateRoomWidthAndHeight location
+            GenerateObstacles location
                 -- adjust size to uneven tiles in order to place gates in centers of walls
                 ( if modBy 2 width == 0 then
                     width + 1
@@ -873,8 +879,19 @@ generateRoomWidthHeight location =
                   else
                     height
                 )
+                []
         )
         (Random.pair (Random.int Environment.roomMinWidth Environment.roomMaxWidth) (Random.int Environment.roomMinHeight Environment.roomMaxHeight))
+
+
+generateObstacleCoord : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int ) -> Cmd Msg
+generateObstacleCoord location ( width, height ) coords =
+    let
+        ( offsetX, offsetY ) =
+            RectangularRoom.roomOffset width height
+    in
+    Random.generate (\coord -> GenerateObstacles location ( width, height ) (coord :: coords))
+        (Random.pair (Random.int (offsetX + 1) (offsetX + width // 2)) (Random.int (offsetY + 1) (offsetY + height // 2)))
 
 
 

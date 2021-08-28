@@ -3,6 +3,7 @@ module RectangularRoom exposing
     , RectangularRoom
     , Wall
     , generate
+    , roomOffset
     , updateEnemies
     , updateEnemyLookDirectionInRoom
     )
@@ -74,27 +75,38 @@ addGates x1 x2 y1 y2 =
     ]
 
 
-generate : ( Int, Int ) -> Int -> Int -> Int -> RectangularRoom
-generate coordinate width height level =
+
+
+
+generate : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int ) -> Int -> RectangularRoom
+generate coordinate ( width, height ) obstacles level =
     let
+        ( offsetX, offsetY ) =
+            roomOffset width height
+
         inner =
             pairOneWithAll offsetX (offsetX + width) (List.range offsetY (offsetY + height - 1))
 
-        offsetX =
-            Environment.screenWidth // 2 - width // 2
-
-        offsetY =
-            Environment.screenHeight // 2 - height // 2
 
         addedGates =
             addGates offsetX width offsetY height
+
     in
     { location = coordinate
     , width = width
     , height = height
     , center = ( Environment.screenWidth // 2, Environment.screenHeight // 2 )
-    , inner = inner
-    , gates = addedGates
+    , inner =
+        if coordinate == ( 0, 0 ) then
+            inner
+
+        else
+            List.Extra.filterNot
+                (\tile ->
+                    List.member tile (addObstacles obstacles [])
+                )
+                inner
+    , gates = addGates offsetX width offsetY height
     , level = level
     , enemies = []
     , outerWalls = generateWalls addedGates ( offsetX - 1, offsetY - 1 ) ( (Environment.screenWidth // 2 + width // 2) + 1, (Environment.screenHeight // 2 + height // 2) + 1 )
@@ -122,6 +134,7 @@ generateWalls gates ( leftUpX, leftUpY ) ( rightDownX, rightDownY ) =
     }
 
 
+
 getDirectionGateWall : List Gate -> Direction -> Maybe ( Int, Int )
 getDirectionGateWall gates dir =
     let
@@ -144,6 +157,39 @@ getVerticalCoords x y0 y1 =
 getHorizontalCoords : Int -> Int -> Int -> List ( Int, Int )
 getHorizontalCoords y x0 x1 =
     List.map (\x -> ( x, y )) (List.range x0 x1)
+
+
+roomOffset : Int -> Int -> ( Int, Int )
+roomOffset width height =
+    ( Environment.screenWidth // 2 - width // 2, Environment.screenHeight // 2 - height // 2 )
+
+
+addObstacles : List ( Int, Int ) -> List ( Int, Int ) -> List ( Int, Int )
+addObstacles origins result =
+    case origins of
+        x :: xs ->
+            generateObstacle x (modBy 2 (List.length origins)) ++ addObstacles xs result
+
+        [] ->
+            result
+
+
+generateObstacle : ( Int, Int ) -> Int -> List ( Int, Int )
+generateObstacle ( x, y ) direction =
+    let
+        range =
+            List.range 0 (Environment.wallLength - 1)
+    in
+    List.map
+        (\offset ->
+            if direction == 0 then
+                ( x + offset, y )
+
+            else
+                ( x, y + offset )
+        )
+        range
+
 
 
 updateEnemies : RectangularRoom -> Enemy -> Enemy -> RectangularRoom
