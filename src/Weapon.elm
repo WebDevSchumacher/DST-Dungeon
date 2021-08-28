@@ -7,9 +7,14 @@ type alias Damage =
 
 type Weapon
     = Fist
+    | Axe
+    | Stick
     | Bow
-    | NormalSword
-    | Excalibur
+    | Sword
+    | Hammer
+    | BigSword
+    | SuperBow
+    | Katana
 
 
 weaponDamage : Weapon -> Damage
@@ -18,11 +23,26 @@ weaponDamage weapon =
         Fist ->
             5
 
+        Stick ->
+            6
+
         Bow ->
             10
 
-        NormalSword ->
+        Sword ->
             15
 
-        Excalibur ->
+        Axe ->
+            30
+
+        Hammer ->
+            35
+
+        BigSword ->
             40
+
+        SuperBow ->
+            40
+
+        Katana ->
+            55

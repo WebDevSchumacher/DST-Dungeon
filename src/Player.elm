@@ -1,6 +1,7 @@
 module Player exposing (Player, PlayerStatus(..), changeImgSrc, playerStatusToAttacking, playerStatusToDead, playerStatusToStanding, playerStatusToString)
 
 import Direction exposing (Direction(..), directionToString)
+import Item exposing (ItemName)
 import Weapon exposing (Weapon)
 
 
@@ -15,7 +16,8 @@ type alias Player =
     { level : Int
     , experience : Int
     , life : Int
-    , inventory : List Weapon
+    , inventory : List ItemName
+    , weaponInventory : List Weapon
     , currentWeapon : Weapon
     , position : ( Int, Int )
     , prevPosition : ( Int, Int )

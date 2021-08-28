@@ -84,6 +84,7 @@ init =
         , experience = 0
         , life = 10
         , inventory = []
+        , weaponInventory = []
         , currentWeapon = Fist
         , position = room.center
         , prevPosition = room.center
