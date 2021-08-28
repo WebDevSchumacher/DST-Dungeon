@@ -1,5 +1,6 @@
 module Environment exposing
     ( baseExperience
+    , entityOffsetY
     , experienceIncreaseFactor
     , numberRooms
     , playerBoundBox
@@ -12,6 +13,11 @@ module Environment exposing
     , wallCount
     , wallLength
     )
+
+
+entityOffsetY : Float
+entityOffsetY =
+    toFloat playerBoundBox * 0
 
 
 roomMinWidth : Int

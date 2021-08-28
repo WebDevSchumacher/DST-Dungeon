@@ -12,7 +12,7 @@
 #player_Walking_up,
 #player_Walking_left,
 #player_Walking_right {
-  animation: moveSpritePlayer 0.4s steps(4) infinite;
+  animation: moveSpritePlayer 0.3s steps(4) infinite;
   image-rendering: pixelated;
 }
 

@@ -38,7 +38,7 @@ movementDelay =
 
 walkingDuration : Float
 walkingDuration =
-    400
+    300
 
 
 attackDuration : Float
