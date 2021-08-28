@@ -20,6 +20,7 @@ import RectangularRoom exposing (Gate, RectangularRoom)
 import Simple.Animation as Animation exposing (Animation)
 import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
+import String exposing (fromFloat)
 import Svg exposing (Svg, image, line, rect, svg)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
@@ -517,16 +518,109 @@ playerToSvg { position, prevPosition, lookDirection, playerStatus } =
 
 
 
+-- Draw outer Walls
+
+
+drawOuterWalls : RectangularRoom.Wall -> List (Svg Msg)
+drawOuterWalls { leftUpCorner, leftDownCorner, rightUpCorner, rightDownCorner, upWalls, downWalls, leftWalls, rightWalls, rightGateWalls, leftGateWalls, upGateWalls, downGateWalls } =
+    drawCornerWall leftUpCorner Left Up
+        :: drawCornerWall leftDownCorner Left Down
+        :: drawCornerWall rightUpCorner Right Up
+        :: drawCornerWall rightDownCorner Right Down
+        :: wallsToSvg upWalls Up
+        ++ drawGateWalls rightGateWalls Right
+        ++ drawGateWalls leftGateWalls Left
+        ++ drawGateWalls upGateWalls Up
+        ++ drawGateWalls downGateWalls Down
+        ++ wallsToSvg downWalls Down
+        ++ wallsToSvg leftWalls Left
+        ++ wallsToSvg rightWalls Right
+
+
+wallsToSvg : List ( Int, Int ) -> Direction -> List (Svg Msg)
+wallsToSvg list dir =
+    case list of
+        [] ->
+            []
+
+        p :: ps ->
+            case p of
+                ( wx, wy ) ->
+                    image
+                        [ x (String.fromInt wx)
+                        , y (String.fromInt wy)
+                        , width (String.fromInt Environment.playerBoundBox)
+                        , height (String.fromInt Environment.playerBoundBox)
+                        , xlinkHref ("assets/tiles/Walls/" ++ Direction.directionToString dir ++ "Wall.png")
+                        ]
+                        []
+                        :: wallsToSvg ps dir
+
+
+drawCornerWall : ( Int, Int ) -> Direction -> Direction -> Svg Msg
+drawCornerWall ( wx, wy ) dir dir2 =
+    image
+        [ x (String.fromInt wx)
+        , y (String.fromInt wy)
+        , width (String.fromInt Environment.playerBoundBox)
+        , height (String.fromInt Environment.playerBoundBox)
+        , xlinkHref ("assets/tiles/Walls/" ++ Direction.directionToString dir ++ Direction.directionToString dir2 ++ "Corner.png")
+        ]
+        []
+
+
+drawGateWalls : Maybe ( Int, Int ) -> Direction -> List (Svg Msg)
+drawGateWalls gateCoord dir =
+    case gateCoord of
+        Nothing ->
+            []
+
+        Just ( x1, y1 ) ->
+            let
+                ( srcImg1, srcImg2 ) =
+                    if dir == Right || dir == Left then
+                        ( "Up", "Down" )
+
+                    else
+                        ( "Right", "Left" )
+
+                ( ( xw1, yw1 ), ( xw2, yw2 ) ) =
+                    if dir == Right || dir == Left then
+                        ( ( x1, y1 - 1 ), ( x1, y1 + 1 ) )
+
+                    else
+                        ( ( x1 + 1, y1 ), ( x1 - 1, y1 ) )
+            in
+            [ image
+                [ x (String.fromInt xw1)
+                , y (String.fromInt yw1)
+                , width (String.fromInt Environment.playerBoundBox)
+                , height (String.fromInt Environment.playerBoundBox)
+                , xlinkHref ("assets/tiles/Walls/" ++ srcImg1 ++ "Wall.png")
+                ]
+                []
+            , image
+                [ x (String.fromInt xw2)
+                , y (String.fromInt yw2)
+                , width (String.fromInt Environment.playerBoundBox)
+                , height (String.fromInt Environment.playerBoundBox)
+                , xlinkHref ("assets/tiles/Walls/" ++ srcImg2 ++ "Wall.png")
+                ]
+                []
+            ]
+
+
+
 -- Simple animation usage
 
 
 walkAnim : ( Int, Int ) -> ( Int, Int ) -> Animation
 walkAnim ( prevX, prevY ) ( x, y ) =
     Animation.steps
-        { startAt = [ P.x (toFloat prevX), P.y (toFloat prevY) ]
+        { startAt = [ P.x (toFloat prevX), P.y (toFloat prevY - Environment.entityOffsetY) ]
         , options = [ Animation.linear ]
         }
-        [ Animation.step (round Action.walkingDuration) [ P.x (toFloat x), P.y (toFloat y) ]
+        [ Animation.step (round Action.walkingDuration) [ P.x (toFloat x), P.y (toFloat y - Environment.entityOffsetY) ]
         ]
 
 
@@ -561,7 +655,7 @@ enemiesToSvg enemies =
                 { position } ->
                     image
                         [ x (String.fromInt (Tuple.first position))
-                        , y (String.fromInt (Tuple.second position))
+                        , y (fromFloat (toFloat (Tuple.second position) - Environment.entityOffsetY))
                         , width (String.fromInt Environment.playerBoundBox)
                         , height (String.fromInt Environment.playerBoundBox)
                         , fill "green"
@@ -597,7 +691,7 @@ drawTiles ls color =
                 , width (String.fromInt Environment.playerBoundBox)
                 , height (String.fromInt Environment.playerBoundBox)
                 , fill color
-                , xlinkHref "assets/floor_1.png"
+                , xlinkHref "assets/tiles/floor.png"
                 , stroke "black"
                 , strokeWidth "0.05"
                 ]
@@ -632,6 +726,7 @@ view model =
                         (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
                         []
                         :: generateGridlines
+                        ++ drawOuterWalls model.currentRoom.outerWalls
                         ++ drawSVGRoom model.currentRoom
                         ++ playerToSvg
                             model.player
