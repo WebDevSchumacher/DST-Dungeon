@@ -9,6 +9,8 @@ module Environment exposing
     , roomMinWidth
     , screenHeight
     , screenWidth
+    , wallCount
+    , wallLength
     )
 
 
@@ -60,3 +62,13 @@ baseExperience =
 experienceIncreaseFactor : Float
 experienceIncreaseFactor =
     1.3
+
+
+wallCount : Int
+wallCount =
+    6
+
+
+wallLength : Int
+wallLength =
+    7
