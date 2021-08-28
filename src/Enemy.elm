@@ -2,9 +2,14 @@ module Enemy exposing
     ( Enemy
     , EnemyType(..)
     , createEnemy
-    , pirate
-    , troll
+    , cyclopes
+    , getEmenyLookDirImg
+    , mole
+    , slime
+    , updateEnemyLookDirection
     )
+
+import Direction exposing (Direction(..))
 
 
 type alias Enemy =
@@ -15,6 +20,7 @@ type alias Enemy =
     , experience : Int
     , enemyType : EnemyType
     , position : ( Int, Int )
+    , lookDirection : Direction
     , enemyIMG : String
     }
 
@@ -23,32 +29,50 @@ type EnemyType
     = Troll
     | Orc
     | Warrior
-    | Pirate
+    | Cyclopes
+    | Slime
+    | Mole
 
 
-pirate : Int -> ( Int, Int ) -> Enemy
-pirate level position =
+slime : Int -> ( Int, Int ) -> Enemy
+slime level position =
     { level = level
     , lifePoints = level * 10
     , attackDamage = level
     , strengthFactor = 1.0
     , experience = level * 100
-    , enemyType = Pirate
+    , enemyType = Slime
     , position = position
-    , enemyIMG = "pirate.svg"
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/slime/Slime_Down.png"
     }
 
 
-troll : Int -> ( Int, Int ) -> Enemy
-troll level position =
+mole : Int -> ( Int, Int ) -> Enemy
+mole level position =
+    { level = level
+    , lifePoints = level * 15
+    , attackDamage = level
+    , strengthFactor = 1.1
+    , experience = level * 120
+    , enemyType = Mole
+    , position = position
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/mole/Mole_Down.png"
+    }
+
+
+cyclopes : Int -> ( Int, Int ) -> Enemy
+cyclopes level position =
     { level = level
     , lifePoints = level * 20
     , attackDamage = level * 2
     , strengthFactor = 1.5
     , experience = level * 200
-    , enemyType = Troll
+    , enemyType = Cyclopes
     , position = position
-    , enemyIMG = "troll.svg"
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_Down.png"
     }
 
 
@@ -57,11 +81,61 @@ createEnemy level pos enemyT =
     case pos of
         Just position ->
             case enemyT of
-                Pirate ->
-                    [ pirate level position ]
+                Slime ->
+                    [ slime level position ]
+
+                Mole ->
+                    [ mole level position ]
 
                 _ ->
-                    [ troll level position ]
+                    [ cyclopes level position ]
 
         Nothing ->
             []
+
+
+changeLookDirImgSlime : Direction -> String
+changeLookDirImgSlime direction =
+    "assets/characters/enemies/slime/Slime_" ++ Direction.directionToString direction ++ ".png"
+
+
+changeLookDirImgCyclopes : Direction -> String
+changeLookDirImgCyclopes direction =
+    "assets/characters/enemies/cyclopes/Cyclopes_" ++ Direction.directionToString direction ++ ".png"
+
+
+changeLookDirImgMole : Direction -> String
+changeLookDirImgMole direction =
+    "assets/characters/enemies/mole/Mole_" ++ Direction.directionToString direction ++ ".png"
+
+
+updateEnemyLookDirection : Enemy -> ( Int, Int ) -> Enemy
+updateEnemyLookDirection enemy point =
+    let
+        direction =
+            Direction.changeLookDirection enemy.position point
+    in
+    case direction of
+        Just dir ->
+            { enemy
+                | lookDirection = dir
+            }
+
+        Nothing ->
+            enemy
+
+
+getEmenyLookDirImg : Enemy -> Direction -> String
+getEmenyLookDirImg enemy dir =
+    case enemy.enemyType of
+        Mole ->
+            changeLookDirImgMole dir
+
+        Cyclopes ->
+            changeLookDirImgCyclopes dir
+
+        Slime ->
+            changeLookDirImgSlime dir
+
+        _ ->
+            changeLookDirImgCyclopes dir

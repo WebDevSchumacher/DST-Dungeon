@@ -1,19 +1,17 @@
 module RectangularRoom exposing
     ( Gate
     , RectangularRoom
-    , drawSVGRoom
     , generate
     , roomOffset
     , updateEnemies
+    , updateEnemyLookDirectionInRoom
     )
 
+import Direction exposing (Direction(..))
 import Enemy exposing (Enemy)
 import Environment
 import List
 import List.Extra
-import Svg exposing (Svg, rect)
-import Svg.Attributes exposing (fill, height, stroke, strokeWidth, width, x, x1, x2, y, y1, y2)
-import Utils exposing (Direction(..))
 
 
 type alias RectangularRoom =
@@ -58,29 +56,7 @@ addGates x1 x2 y1 y2 =
     ]
 
 
-drawSVGRoom : RectangularRoom -> List (Svg a)
-drawSVGRoom room =
-    drawTiles room.inner "white" ++ drawTiles (List.map (\gate -> gate.location) room.gates) "green"
 
-
-drawTiles : List ( Int, Int ) -> String -> List (Svg a)
-drawTiles ls color =
-    case ls of
-        ( x1, y1 ) :: ps ->
-            rect
-                [ x (String.fromInt x1)
-                , y (String.fromInt y1)
-                , width (String.fromInt Environment.playerBoundBox)
-                , height (String.fromInt Environment.playerBoundBox)
-                , fill color
-                , stroke "black"
-                , strokeWidth "0.05"
-                ]
-                []
-                :: drawTiles ps color
-
-        [] ->
-            []
 
 
 generate : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int ) -> Int -> RectangularRoom
@@ -151,3 +127,11 @@ updateEnemies room target updated =
 
     else
         { room | enemies = List.Extra.setIf (\enemy -> enemy == target) updated room.enemies }
+
+
+updateEnemyLookDirectionInRoom : Enemy -> ( Int, Int ) -> RectangularRoom -> RectangularRoom
+updateEnemyLookDirectionInRoom enemy pos currentRoom =
+    { currentRoom
+        | enemies =
+            List.Extra.setIf (\en -> en.position == enemy.position) (Enemy.updateEnemyLookDirection enemy pos) currentRoom.enemies
+    }
