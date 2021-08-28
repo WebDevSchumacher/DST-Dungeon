@@ -18,3 +18,8 @@ elm-app start
 elm-app install <package-name>
 ```
 
+## Credit Assets
+
+Assets where taken from:
+https://pixel-boy.itch.io/ninja-adventure-asset-pack
+https://0x72.itch.io/dungeontileset-ii

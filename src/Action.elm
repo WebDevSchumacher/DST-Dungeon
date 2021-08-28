@@ -1,7 +1,10 @@
 module Action exposing
-    ( hitEnemy
+    ( attackDuration
+    , hitEnemy
     , hitPlayer
+    , movementDelay
     , updateEnemyOnTick
+    , walkingDuration
     )
 
 import Enemy exposing (Enemy)
@@ -22,3 +25,22 @@ hitPlayer enemy player =
 updateEnemyOnTick : Enemy -> Enemy
 updateEnemyOnTick enemy =
     enemy
+
+
+
+-- in millisecond
+
+
+movementDelay : Float
+movementDelay =
+    0
+
+
+walkingDuration : Float
+walkingDuration =
+    400
+
+
+attackDuration : Float
+attackDuration =
+    200
