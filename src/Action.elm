@@ -1,5 +1,6 @@
 module Action exposing
-    ( hitEnemy
+    ( attackDuration
+    , hitEnemy
     , hitPlayer
     , movementDelay
     , updateEnemyOnTick
@@ -38,3 +39,8 @@ movementDelay =
 walkingDuration : Float
 walkingDuration =
     400
+
+
+attackDuration : Float
+attackDuration =
+    200

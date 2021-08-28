@@ -4,11 +4,11 @@ import Action
 import Browser
 import Browser.Events
 import Dict exposing (Dict)
-import Direction exposing (Direction(..), changeLookDirection)
+import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
-import Html exposing (Attribute, Html, div, h1, img, text)
+import Html exposing (Attribute, Html, div, h1, text)
 import Html.Attributes exposing (class, id)
 import Html.Events exposing (on)
 import Json.Decode as Decode
@@ -20,8 +20,8 @@ import RectangularRoom exposing (Gate, RectangularRoom)
 import Simple.Animation as Animation exposing (Animation)
 import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
-import Svg exposing (Svg, g, image, line, rect, svg)
-import Svg.Attributes exposing (attributeName, dur, enableBackground, fill, from, height, opacity, repeatCount, stroke, strokeWidth, to, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
+import Svg exposing (Svg, image, line, rect, svg)
+import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
 import Time
 import Utils
@@ -220,7 +220,7 @@ update msg model =
         AttackPlayer enemy ->
             let
                 updatedPlayer =
-                    Action.hitPlayer enemy model.player
+                    Action.hitPlayer enemy model.player |> Player.playerStatusToAttacking
 
                 newRoom =
                     RectangularRoom.updateEnemyLookDirectionInRoom enemy model.player.position model.currentRoom
@@ -233,7 +233,7 @@ update msg model =
                 msgToCmdMsg Die
 
               else
-                Cmd.none
+                delayCmdMsg Action.attackDuration PlayerStatusToStanding
             )
 
         GainExperience enemy ->
@@ -252,7 +252,7 @@ update msg model =
                 Cmd.none
             )
 
-        LevelUp player ->
+        LevelUp _ ->
             ( { model | player = Utils.levelUp model.player }, Cmd.none )
 
         None ->
@@ -294,7 +294,7 @@ update msg model =
                     ( model, Cmd.none )
 
         Die ->
-            ( { model | status = Dead }, Cmd.none )
+            ( { model | status = Dead, player = Player.playerStatusToDead model.player }, Cmd.none )
 
         Tick ->
             updateOnTick model
@@ -335,18 +335,8 @@ update msg model =
         TileClick point ->
             ( updatePlayerLookDirection model point, Cmd.none )
 
-        TileMouseOver point ->
+        TileMouseOver _ ->
             ( model, Cmd.none )
-
-
-updatePlayerLookDirectionDirect : Model -> Direction -> Model
-updatePlayerLookDirectionDirect ({ player } as model) dir =
-    { model
-        | player =
-            { player
-                | lookDirection = dir
-            }
-    }
 
 
 updatePlayerLookDirection : Model -> ( Int, Int ) -> Model
@@ -419,11 +409,6 @@ isPlayerPostionValid position currentRoom =
         || List.any (\enemy -> position == enemy.position) currentRoom.enemies
 
 
-setPlayerPosition : Player -> ( Int, Int ) -> Player
-setPlayerPosition player position =
-    { player | position = position }
-
-
 movePoint : Direction -> ( Int, Int ) -> ( Int, Int )
 movePoint direction ( x, y ) =
     case direction of
@@ -442,13 +427,6 @@ movePoint direction ( x, y ) =
 
 
 ---- VIEW ----
-
-
-outOfBounds : RectangularRoom -> ( Int, Int ) -> Bool
-outOfBounds { width, height } position =
-    case position of
-        ( x1, y1 ) ->
-            x1 >= width || y1 >= height || x1 < 0 || y1 < 0
 
 
 generateGridlines : List (Svg Msg)
@@ -498,33 +476,43 @@ playerToSvg { position, prevPosition, lookDirection, playerStatus } =
         idStr =
             "player_" ++ Player.playerStatusToString playerStatus ++ "_" ++ Direction.directionToString lookDirection
 
+        srcLink =
+            Player.changeImgSrc playerStatus lookDirection
+
+        widthIMG =
+            if playerStatus == Player.Dead then
+                String.fromInt Environment.playerBoundBox
+
+            else
+                String.fromInt (Environment.playerBoundBox * 4)
+
         vwBox =
-            Direction.getViewBoxFromDirection lookDirection
+            if playerStatus == Player.Dead then
+                "0 0 1 1"
+
+            else
+                Direction.getViewBoxFromDirection lookDirection
     in
-    case position of
-        ( xp, yp ) ->
-            animatedG
-                (walkAnim
-                    prevPosition
-                    position
-                )
-                []
-                [ svg
-                    [ --  x (String.fromInt xp)
-                      -- , y (String.fromInt yp)
-                      width (String.fromInt Environment.playerBoundBox)
-                    , viewBox vwBox
-                    , height (String.fromInt Environment.playerBoundBox)
-                    ]
-                    [ image
-                        [ clickPlayer
-                        , id idStr
-                        , width (String.fromInt (Environment.playerBoundBox * 4))
-                        , xlinkHref "assets/characters/player/Walk.png"
-                        ]
-                        []
-                    ]
+    animatedG
+        (walkAnim
+            prevPosition
+            position
+        )
+        []
+        [ svg
+            [ width (String.fromInt Environment.playerBoundBox)
+            , viewBox vwBox
+            , height (String.fromInt Environment.playerBoundBox)
+            ]
+            [ image
+                [ clickPlayer
+                , id idStr
+                , width widthIMG
+                , xlinkHref srcLink
                 ]
+                []
+            ]
+        ]
 
 
 
@@ -546,6 +534,7 @@ animatedG =
     animatedSvg Svg.g
 
 
+animatedSvg : (List (Attribute msg) -> List (Html msg) -> Html msg) -> Animation -> List (Attribute msg) -> List (Html msg) -> Html msg
 animatedSvg =
     Animated.svg
         { class = Svg.Attributes.class
@@ -638,22 +627,6 @@ view model =
             [ div [ class "gameContainer" ]
                 [ svg
                     (id "gameCanvas" :: svgCanvasStyle)
-                    --[   rect
-                    --     [ x "3"
-                    --     , y "20"
-                    --     , width (String.fromInt Environment.playerBoundBox)
-                    --     , height (String.fromInt Environment.playerBoundBox)
-                    --     , fill "red"
-                    --     ]
-                    --     [ Svg.animate
-                    --         [ attributeName "y"
-                    --         , from "3"
-                    --         , to "20"
-                    --         , dur "3s"
-                    --         ]
-                    --         []
-                    --     ][
-                    --]
                     (rect
                         (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
                         []
@@ -723,19 +696,9 @@ toKey string =
             None
 
 
-mousePositionDecoder : Decode.Decoder Msg
-mousePositionDecoder =
-    Decode.map2 toMouseMove (Decode.field "pageX" Decode.float) (Decode.field "pageY" Decode.float)
-
-
 toMouseMove : Float -> Float -> Msg
 toMouseMove x y =
     MouseMove x y
-
-
-clickDecoder : Decode.Decoder Msg
-clickDecoder =
-    Decode.map toClick (Decode.field "target" jsValDecoder)
 
 
 jsValDecoder : Decode.Decoder JsVal
@@ -779,7 +742,7 @@ tickSubscription model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ if not (model.player.playerStatus == Walking) then
+        [ if model.player.playerStatus == Standing then
             Browser.Events.onKeyDown keyDecoder
 
           else

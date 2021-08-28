@@ -6,13 +6,13 @@
     https://github.com/halfzebra/create-elm-app/issues/320
 */
 
-/* Styling for animation and pixelart*/
+/* Styling for animation and pixelart-------------------------------------*/
 
 #player_Walking_down,
 #player_Walking_up,
 #player_Walking_left,
 #player_Walking_right {
-  animation: moveSpritePlayer 0.3s steps(4) infinite;
+  animation: moveSpritePlayer 0.4s steps(4) infinite;
   image-rendering: pixelated;
 }
 
@@ -32,7 +32,8 @@
 #player_Standing_right {
   image-rendering: pixelated;
 }
-/*  */
+
+/* -------------------------------------------------------------------- */
 
 body {
   padding: 1rem;
