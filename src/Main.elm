@@ -117,7 +117,6 @@ msgToCmdMsg msg =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-
         GenerateObstacles location size obstacles ->
             if List.length obstacles < Environment.wallCount then
                 ( model, generateObstacleCoord location size obstacles )
@@ -130,7 +129,6 @@ update msg model =
                 ( { model | gameMap = room :: model.gameMap }
                 , Task.perform (always (EnterRoom room)) (Task.succeed ())
                 )
-
 
         PlayerStatusToStanding ->
             ( { model
@@ -370,7 +368,7 @@ updateOnTick : Model -> ( Model, Cmd Msg )
 updateOnTick ({ currentRoom } as model) =
     ( { model
         | currentRoom =
-            { currentRoom | enemies = List.map (\enemy -> Action.updateEnemyOnTick enemy) currentRoom.enemies }
+            { currentRoom | enemies = List.map (\enemy -> Action.updateEnemyOnTick enemy model.player model.currentRoom) currentRoom.enemies }
       }
     , Cmd.none
     )
@@ -655,7 +653,7 @@ enemiesToSvg enemies =
         em :: ems ->
             let
                 imgSrc =
-                    Enemy.getEmenyLookDirImg em em.lookDirection
+                    Enemy.getEnemyLookDirImg em em.lookDirection
             in
             case em of
                 { position } ->
@@ -682,11 +680,13 @@ svgCanvasStyle =
 
 drawSVGRoom : RectangularRoom -> List (Svg Msg)
 drawSVGRoom room =
-    drawTiles room.inner "white" ++ drawTiles (List.map (\gate -> gate.location) room.gates) "green"
+    drawTiles room.inner Environment.floorAssetPath
+        ++ drawTiles (List.map (\gate -> gate.location) room.gates) Environment.gateAssetPath
+        ++ drawTiles room.walls Environment.wallAssetPath
 
 
 drawTiles : List ( Int, Int ) -> String -> List (Svg Msg)
-drawTiles ls color =
+drawTiles ls path =
     case ls of
         ( x1, y1 ) :: ps ->
             image
@@ -696,13 +696,12 @@ drawTiles ls color =
                 , y (String.fromInt y1)
                 , width (String.fromInt Environment.playerBoundBox)
                 , height (String.fromInt Environment.playerBoundBox)
-                , fill color
-                , xlinkHref "assets/tiles/floor.png"
+                , xlinkHref path
                 , stroke "black"
                 , strokeWidth "0.05"
                 ]
                 []
-                :: drawTiles ps color
+                :: drawTiles ps path
 
         [] ->
             []

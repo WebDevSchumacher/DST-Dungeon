@@ -21,6 +21,7 @@ type alias RectangularRoom =
     , height : Int
     , center : ( Int, Int )
     , inner : List ( Int, Int )
+    , walls : List ( Int, Int )
     , gates : List Gate
     , level : Int
     , enemies : List Enemy
@@ -75,9 +76,6 @@ addGates x1 x2 y1 y2 =
     ]
 
 
-
-
-
 generate : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int ) -> Int -> RectangularRoom
 generate coordinate ( width, height ) obstacles level =
     let
@@ -87,10 +85,11 @@ generate coordinate ( width, height ) obstacles level =
         inner =
             pairOneWithAll offsetX (offsetX + width) (List.range offsetY (offsetY + height - 1))
 
-
         addedGates =
             addGates offsetX width offsetY height
 
+        walls =
+            addObstacles obstacles []
     in
     { location = coordinate
     , width = width
@@ -103,9 +102,10 @@ generate coordinate ( width, height ) obstacles level =
         else
             List.Extra.filterNot
                 (\tile ->
-                    List.member tile (addObstacles obstacles [])
+                    List.member tile walls
                 )
                 inner
+    , walls = walls
     , gates = addGates offsetX width offsetY height
     , level = level
     , enemies = []
@@ -132,7 +132,6 @@ generateWalls gates ( leftUpX, leftUpY ) ( rightDownX, rightDownY ) =
     , upGateWalls = getDirectionGateWall gates Up
     , downGateWalls = getDirectionGateWall gates Down
     }
-
 
 
 getDirectionGateWall : List Gate -> Direction -> Maybe ( Int, Int )
@@ -189,7 +188,6 @@ generateObstacle ( x, y ) direction =
                 ( x, y + offset )
         )
         range
-
 
 
 updateEnemies : RectangularRoom -> Enemy -> Enemy -> RectangularRoom

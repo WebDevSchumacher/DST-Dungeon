@@ -85,14 +85,14 @@ wallLength =
 
 floorAssetPath : String
 floorAssetPath =
-    "assets/floor_1.png"
+    "assets/tiles/floor.png"
 
 
 wallAssetPath : String
 wallAssetPath =
-    "assets/wall_1.png"
+    "assets/tiles/wall.png"
 
 
 gateAssetPath : String
 gateAssetPath =
-    "assets/gate_1.png"
+    "assets/tiles/gate.png"
