@@ -3,6 +3,7 @@ module RectangularRoom exposing
     , RectangularRoom
     , drawSVGRoom
     , generate
+    , roomOffset
     , updateEnemies
     )
 
@@ -82,27 +83,65 @@ drawTiles ls color =
             []
 
 
-generate : ( Int, Int ) -> Int -> Int -> Int -> RectangularRoom
-generate coordinate width height level =
+generate : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int ) -> Int -> RectangularRoom
+generate coordinate ( width, height ) obstacles level =
     let
+        ( offsetX, offsetY ) =
+            roomOffset width height
+
         inner =
             pairOneWithAll offsetX (offsetX + width) (List.range offsetY (offsetY + height - 1))
-
-        offsetX =
-            Environment.screenWidth // 2 - width // 2
-
-        offsetY =
-            Environment.screenHeight // 2 - height // 2
     in
     { location = coordinate
     , width = width
     , height = height
     , center = ( Environment.screenWidth // 2, Environment.screenHeight // 2 )
-    , inner = inner
+    , inner =
+        if coordinate == ( 0, 0 ) then
+            inner
+
+        else
+            List.Extra.filterNot
+                (\tile ->
+                    List.member tile (addObstacles obstacles [])
+                )
+                inner
     , gates = addGates offsetX width offsetY height
     , level = level
     , enemies = []
     }
+
+
+roomOffset : Int -> Int -> ( Int, Int )
+roomOffset width height =
+    ( Environment.screenWidth // 2 - width // 2, Environment.screenHeight // 2 - height // 2 )
+
+
+addObstacles : List ( Int, Int ) -> List ( Int, Int ) -> List ( Int, Int )
+addObstacles origins result =
+    case origins of
+        x :: xs ->
+            generateObstacle x (modBy 2 (List.length origins)) ++ addObstacles xs result
+
+        [] ->
+            result
+
+
+generateObstacle : ( Int, Int ) -> Int -> List ( Int, Int )
+generateObstacle ( x, y ) direction =
+    let
+        range =
+            List.range 0 (Environment.wallLength - 1)
+    in
+    List.map
+        (\offset ->
+            if direction == 0 then
+                ( x + offset, y )
+
+            else
+                ( x, y + offset )
+        )
+        range
 
 
 updateEnemies : RectangularRoom -> Enemy -> Enemy -> RectangularRoom
