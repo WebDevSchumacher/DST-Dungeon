@@ -89,7 +89,7 @@ generate coordinate ( width, height ) obstacles level =
             addGates offsetX width offsetY height
 
         walls =
-            addObstacles obstacles []
+            filterObstacles offsetX (offsetX + width - 1) offsetY (offsetY + height - 1) (addObstacles obstacles [])
     in
     { location = coordinate
     , width = width
@@ -111,6 +111,29 @@ generate coordinate ( width, height ) obstacles level =
     , enemies = []
     , outerWalls = generateWalls addedGates ( offsetX - 1, offsetY - 1 ) ( (Environment.screenWidth // 2 + width // 2) + 1, (Environment.screenHeight // 2 + height // 2) + 1 )
     }
+
+
+filterObstacles : Int -> Int -> Int -> Int -> List ( Int, Int ) -> List ( Int, Int )
+filterObstacles minX maxX minY maxY obstacles =
+    let
+        xMid =
+            minX + ((maxX - minX) // 2)
+
+        yMid =
+            minY + ((maxY - minY) // 2)
+
+        entrances =
+            [ ( xMid, maxY )
+            , ( xMid, minY )
+            , ( minX, yMid )
+            , ( maxX, yMid )
+            ]
+    in
+    List.filter
+        (\( x, y ) ->
+            x >= minX && x <= maxX && y >= minY && y <= maxY && not (List.member ( x, y ) entrances)
+        )
+        obstacles
 
 
 
