@@ -44,7 +44,7 @@ slime level position =
     , enemyType = Slime
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/slime/Slime_Down.png"
+    , enemyIMG = "assets/characters/enemies/slime/Slime_down.png"
     }
 
 
@@ -58,7 +58,7 @@ mole level position =
     , enemyType = Mole
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/mole/Mole_Down.png"
+    , enemyIMG = "assets/characters/enemies/mole/Mole_down.png"
     }
 
 
@@ -72,7 +72,7 @@ cyclopes level position =
     , enemyType = Cyclopes
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_Down.png"
+    , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_down.png"
     }
 
 

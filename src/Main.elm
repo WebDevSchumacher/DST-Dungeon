@@ -3,7 +3,6 @@ module Main exposing (main)
 import Action
 import Browser
 import Browser.Events
-import Dict exposing (Dict)
 import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
@@ -54,29 +53,14 @@ type Msg
     | Die
     | Tick
     | Pause
-      --| MouseMove Float Float
     | TileClick ( Int, Int )
     | TileMouseOver ( Int, Int )
-
-
-
---| Click
 
 
 type Status
     = Running
     | Paused
     | Dead
-
-
-
---type JsVal
---    = JsString String
---    | JsInt Int
---    | JsFloat Float
---    | JsArray (List JsVal)
---    | JsObject (Dict String JsVal)
---    | JsNull
 
 
 init : Model
@@ -323,12 +307,6 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             , Cmd.none
             )
 
-        --
-        --MouseMove x y ->
-        --    ( model, Cmd.none )
-        --
-        --Click ->
-        --    ( model, Cmd.none )
         TileClick point ->
             ( updatePlayerLookDirection model point, Cmd.none )
 
@@ -776,15 +754,6 @@ view model =
         ]
 
 
-
---clickPlayer : Html.Attribute Msg
---clickPlayer =
---    on "click"
---        (Decode.map toClick
---            (Decode.field "target" jsValDecoder)
---        )
-
-
 clickTile : ( Int, Int ) -> Html.Attribute Msg
 clickTile point =
     on "click" (Decode.succeed (TileClick point))
@@ -824,29 +793,6 @@ toKey string =
 
         _ ->
             None
-
-
-
---toMouseMove : Float -> Float -> Msg
---toMouseMove x y =
---    MouseMove x y
---jsValDecoder : Decode.Decoder JsVal
---jsValDecoder =
---    Decode.oneOf
---        [ Decode.map JsString Decode.string
---        , Decode.map JsInt Decode.int
---        , Decode.map JsFloat Decode.float
---        , Decode.list (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsArray
---        , Decode.dict (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsObject
---        , Decode.null JsNull
---        ]
---toClick : JsVal -> Msg
---toClick str =
---    let
---        _ =
---            Debug.log "str" str
---    in
---    Click
 
 
 tickSubscription : Model -> Sub Msg
