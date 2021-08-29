@@ -5,9 +5,12 @@ import RectangularRoom exposing (RectangularRoom)
 import Set exposing (Set)
 
 
-pathfind : ( Int, Int ) -> ( Int, Int ) -> Set ( Int, Int ) -> RectangularRoom -> List ( Int, Int )
-pathfind start end obstacles room =
+pathfind : ( Int, Int ) -> ( Int, Int ) -> RectangularRoom -> List ( Int, Int )
+pathfind start end room =
     let
+        obstacles =
+            Set.fromList room.walls
+
         graph =
             pathGraph start end obstacles room
 
@@ -29,7 +32,7 @@ pathfind start end obstacles room =
         []
 
     else
-        accum end []
+        List.drop 1 (accum end [])
 
 
 pathGraph : ( Int, Int ) -> ( Int, Int ) -> Set ( Int, Int ) -> RectangularRoom -> Dict ( Int, Int ) (Maybe ( Int, Int ))

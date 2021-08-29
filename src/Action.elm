@@ -8,7 +8,9 @@ module Action exposing
     )
 
 import Enemy exposing (Enemy)
+import Path
 import Player exposing (Player)
+import RectangularRoom exposing (RectangularRoom)
 import Weapon exposing (Weapon)
 
 
@@ -22,9 +24,18 @@ hitPlayer enemy player =
     { player | life = player.life - enemy.attackDamage }
 
 
-updateEnemyOnTick : Enemy -> Enemy
-updateEnemyOnTick enemy =
-    enemy
+updateEnemyOnTick : Enemy -> Player -> RectangularRoom -> Maybe ( Enemy, ( Int, Int ) )
+updateEnemyOnTick enemy player room =
+    let
+        maybeTarget =
+            List.head (Path.pathfind enemy.position player.position room)
+    in
+    case maybeTarget of
+        Just target ->
+            Just ( enemy, target )
+
+        Nothing ->
+            Nothing
 
 
 

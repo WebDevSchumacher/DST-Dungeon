@@ -41,7 +41,8 @@ type alias Model =
 type Msg
     = None
     | Direction Direction
-    | GenerateObstacles ( Int, Int ) ( Int, Int ) (List ( Int, Int ))
+    | GenerateRoom ( Int, Int ) ( Int, Int ) (List ( Int, Int ))
+    | EnemyMovement Enemy ( Int, Int )
     | PlayerStatusToStanding
     | PlaceEnemy ( Int, EnemyType, RectangularRoom )
     | AttackEnemy Enemy
@@ -53,10 +54,13 @@ type Msg
     | Die
     | Tick
     | Pause
-    | MouseMove Float Float
+      --| MouseMove Float Float
     | TileClick ( Int, Int )
     | TileMouseOver ( Int, Int )
-    | Click
+
+
+
+--| Click
 
 
 type Status
@@ -65,13 +69,14 @@ type Status
     | Dead
 
 
-type JsVal
-    = JsString String
-    | JsInt Int
-    | JsFloat Float
-    | JsArray (List JsVal)
-    | JsObject (Dict String JsVal)
-    | JsNull
+
+--type JsVal
+--    = JsString String
+--    | JsInt Int
+--    | JsFloat Float
+--    | JsArray (List JsVal)
+--    | JsObject (Dict String JsVal)
+--    | JsNull
 
 
 init : Model
@@ -115,40 +120,40 @@ msgToCmdMsg msg =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
     case msg of
-        GenerateObstacles location size obstacles ->
+        GenerateRoom location size obstacles ->
             if List.length obstacles < Environment.wallCount then
                 ( model, generateObstacleCoord location size obstacles )
 
             else
                 let
                     room =
-                        RectangularRoom.generate location size obstacles model.player.level
+                        RectangularRoom.generate location size obstacles player.level
                 in
                 ( { model | gameMap = room :: model.gameMap }
-                , Task.perform (always (EnterRoom room)) (Task.succeed ())
+                , msgToCmdMsg (EnterRoom room)
                 )
 
         PlayerStatusToStanding ->
             ( { model
-                | player = model.player |> Player.playerStatusToStanding
+                | player = player |> Player.playerStatusToStanding
               }
             , Cmd.none
             )
 
         Direction direction ->
-            case model.status of
+            case status of
                 Running ->
                     let
                         maybeEnemy =
-                            List.Extra.find (\enemy -> enemy.position == newLocation) model.currentRoom.enemies
+                            List.Extra.find (\enemy -> enemy.position == newLocation) currentRoom.enemies
 
                         newLocation =
-                            movePoint direction model.player.position
+                            movePoint direction player.position
 
                         maybeGate =
-                            List.Extra.find (\gate -> gate.location == newLocation) model.currentRoom.gates
+                            List.Extra.find (\gate -> gate.location == newLocation) currentRoom.gates
                     in
                     case maybeGate of
                         Just gate ->
@@ -175,10 +180,10 @@ update msg model =
         EnterGate gate ->
             let
                 roomCoords =
-                    GameMap.roomCoords model.currentRoom.location gate.direction
+                    GameMap.roomCoords currentRoom.location gate.direction
 
                 maybeRoom =
-                    List.Extra.find (\room -> room.location == roomCoords) model.gameMap
+                    List.Extra.find (\room -> room.location == roomCoords) gameMap
             in
             case maybeRoom of
                 Just room ->
@@ -203,15 +208,15 @@ update msg model =
         AttackEnemy target ->
             let
                 attacked =
-                    Action.hitEnemy model.player.currentWeapon target
+                    Action.hitEnemy player.currentWeapon target
 
                 updatedRoom =
-                    RectangularRoom.updateEnemies model.currentRoom target attacked
+                    RectangularRoom.updateEnemies currentRoom target attacked
             in
             ( updatePlayerLookDirection
                 { model
                     | currentRoom = updatedRoom
-                    , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom model.gameMap
+                    , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom gameMap
                 }
                 target.position
             , msgToCmdMsg
@@ -226,10 +231,10 @@ update msg model =
         AttackPlayer enemy ->
             let
                 updatedPlayer =
-                    Action.hitPlayer enemy model.player |> Player.playerStatusToAttacking
+                    Action.hitPlayer enemy player |> Player.playerStatusToAttacking
 
                 newRoom =
-                    RectangularRoom.updateEnemyLookDirectionInRoom enemy model.player.position model.currentRoom
+                    RectangularRoom.updateEnemyLookDirectionInRoom enemy player.position currentRoom
             in
             ( { model
                 | player = updatedPlayer
@@ -245,7 +250,7 @@ update msg model =
         GainExperience enemy ->
             let
                 newXpPlayer =
-                    Utils.gainExperience model.player enemy
+                    Utils.gainExperience player enemy
 
                 levelUp =
                     Utils.experienceToLevelUp newXpPlayer.level <= newXpPlayer.experience
@@ -259,13 +264,13 @@ update msg model =
             )
 
         LevelUp _ ->
-            ( { model | player = Utils.levelUp model.player }, Cmd.none )
+            ( { model | player = Utils.levelUp player }, Cmd.none )
 
         None ->
             ( model, Cmd.none )
 
         EnterRoom room ->
-            case model.roomTransition of
+            case roomTransition of
                 Just direction ->
                     let
                         entrance =
@@ -276,9 +281,6 @@ update msg model =
                             let
                                 playerPos =
                                     movePoint direction gate.location
-
-                                player =
-                                    model.player
                             in
                             ( { model
                                 | currentRoom = room
@@ -300,7 +302,7 @@ update msg model =
                     ( model, Cmd.none )
 
         Die ->
-            ( { model | status = Dead, player = Player.playerStatusToDead model.player }, Cmd.none )
+            ( { model | status = Dead, player = Player.playerStatusToDead player }, Cmd.none )
 
         Tick ->
             updateOnTick model
@@ -308,7 +310,7 @@ update msg model =
         Pause ->
             ( { model
                 | status =
-                    case model.status of
+                    case status of
                         Running ->
                             Paused
 
@@ -321,28 +323,53 @@ update msg model =
             , Cmd.none
             )
 
-        MouseMove x y ->
-            let
-                _ =
-                    Debug.log "x" x
-
-                _ =
-                    Debug.log "y" y
-            in
-            ( model, Cmd.none )
-
-        Click ->
-            let
-                _ =
-                    Debug.log "click" "message"
-            in
-            ( model, Cmd.none )
-
+        --
+        --MouseMove x y ->
+        --    ( model, Cmd.none )
+        --
+        --Click ->
+        --    ( model, Cmd.none )
         TileClick point ->
             ( updatePlayerLookDirection model point, Cmd.none )
 
         TileMouseOver _ ->
             ( model, Cmd.none )
+
+        EnemyMovement enemy target ->
+            if target == player.position then
+                ( model, msgToCmdMsg (AttackPlayer enemy) )
+
+            else
+                let
+                    updatedRoom =
+                        { currentRoom
+                            | enemies =
+                                List.map
+                                    (\e ->
+                                        if e == enemy then
+                                            { enemy | position = target }
+
+                                        else
+                                            e
+                                    )
+                                    currentRoom.enemies
+                        }
+                in
+                ( { model
+                    | currentRoom = updatedRoom
+                    , gameMap =
+                        List.map
+                            (\room ->
+                                if room.location == updatedRoom.location then
+                                    updatedRoom
+
+                                else
+                                    room
+                            )
+                            gameMap
+                  }
+                , Cmd.none
+                )
 
 
 updatePlayerLookDirection : Model -> ( Int, Int ) -> Model
@@ -365,12 +392,16 @@ updatePlayerLookDirection ({ player } as model) point =
 
 
 updateOnTick : Model -> ( Model, Cmd Msg )
-updateOnTick ({ currentRoom } as model) =
-    ( { model
-        | currentRoom =
-            { currentRoom | enemies = List.map (\enemy -> Action.updateEnemyOnTick enemy model.player model.currentRoom) currentRoom.enemies }
-      }
-    , Cmd.none
+updateOnTick ({ currentRoom, player } as model) =
+    let
+        maybeEnemyMovements =
+            List.map (\enemy -> Action.updateEnemyOnTick enemy player currentRoom) currentRoom.enemies
+
+        enemyMovements =
+            List.filterMap identity maybeEnemyMovements
+    in
+    ( model
+    , Cmd.batch (List.map (\( enemy, target ) -> msgToCmdMsg (EnemyMovement enemy target)) enemyMovements)
     )
 
 
@@ -397,10 +428,7 @@ movePlayer direction { player, currentRoom } =
                 , playerStatus = Walking
             }
     in
-    if
-        --outOfBounds currentRoom changedPlayer.position
-        isPlayerPostionValid changedPlayer.position currentRoom
-    then
+    if isPlayerPostionValid changedPlayer.position currentRoom then
         { player
             | lookDirection = direction
         }
@@ -511,8 +539,8 @@ playerToSvg { position, prevPosition, lookDirection, playerStatus } =
             , height (String.fromInt Environment.playerBoundBox)
             ]
             [ image
-                [ clickPlayer
-                , id idStr
+                [ --clickPlayer
+                  id idStr
                 , width widthIMG
                 , xlinkHref srcLink
                 ]
@@ -748,12 +776,13 @@ view model =
         ]
 
 
-clickPlayer : Html.Attribute Msg
-clickPlayer =
-    on "click"
-        (Decode.map toClick
-            (Decode.field "target" jsValDecoder)
-        )
+
+--clickPlayer : Html.Attribute Msg
+--clickPlayer =
+--    on "click"
+--        (Decode.map toClick
+--            (Decode.field "target" jsValDecoder)
+--        )
 
 
 clickTile : ( Int, Int ) -> Html.Attribute Msg
@@ -797,34 +826,27 @@ toKey string =
             None
 
 
-toMouseMove : Float -> Float -> Msg
-toMouseMove x y =
-    MouseMove x y
 
-
-jsValDecoder : Decode.Decoder JsVal
-jsValDecoder =
-    Decode.oneOf
-        [ Decode.map JsString Decode.string
-        , Decode.map JsInt Decode.int
-        , Decode.map JsFloat Decode.float
-        , Decode.list (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsArray
-        , Decode.dict (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsObject
-        , Decode.null JsNull
-        ]
-
-
-
---(Decode.field "altKey" Decode.bool)
-
-
-toClick : JsVal -> Msg
-toClick str =
-    let
-        _ =
-            Debug.log "str" str
-    in
-    Click
+--toMouseMove : Float -> Float -> Msg
+--toMouseMove x y =
+--    MouseMove x y
+--jsValDecoder : Decode.Decoder JsVal
+--jsValDecoder =
+--    Decode.oneOf
+--        [ Decode.map JsString Decode.string
+--        , Decode.map JsInt Decode.int
+--        , Decode.map JsFloat Decode.float
+--        , Decode.list (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsArray
+--        , Decode.dict (Decode.lazy (\_ -> jsValDecoder)) |> Decode.map JsObject
+--        , Decode.null JsNull
+--        ]
+--toClick : JsVal -> Msg
+--toClick str =
+--    let
+--        _ =
+--            Debug.log "str" str
+--    in
+--    Click
 
 
 tickSubscription : Model -> Sub Msg
@@ -865,7 +887,7 @@ generateRoomWidthHeight location =
     -- before we create a room we need to generate to Width and the Height of the Room
     Random.generate
         (\( width, height ) ->
-            GenerateObstacles location
+            GenerateRoom location
                 -- adjust size to uneven tiles in order to place gates in centers of walls
                 ( if modBy 2 width == 0 then
                     width + 1
@@ -889,7 +911,7 @@ generateObstacleCoord location ( width, height ) coords =
         ( offsetX, offsetY ) =
             RectangularRoom.roomOffset width height
     in
-    Random.generate (\coord -> GenerateObstacles location ( width, height ) (coord :: coords))
+    Random.generate (\coord -> GenerateRoom location ( width, height ) (coord :: coords))
         (Random.pair (Random.int (offsetX + 1) (offsetX + width // 2)) (Random.int (offsetY + 1) (offsetY + height // 2)))
 
 
