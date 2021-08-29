@@ -1,3 +1,9 @@
+{--
+Utility module used for enemies to find paths around obstacles to get towards the player
+This is taken from https://github.com/danneu/elm-hex-grid and adjusted to Elm 0.19 and square tiles
+--}
+
+
 module Path exposing (pathfind)
 
 import Dict exposing (Dict)
