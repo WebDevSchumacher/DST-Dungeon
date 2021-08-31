@@ -5,7 +5,7 @@ module Item exposing
     , Weapon
     , WeaponName(..)
     , axe
-    , beaf
+    , beef
     , bigSword
     , bow
     , foodToString
@@ -15,6 +15,7 @@ module Item exposing
     , itemTypeToString
     , katana
     , lifePot
+    , lootTable
     , maxInventory
     , maxStack
     , medipack
@@ -59,6 +60,7 @@ type alias Weapon =
     , damage : Int
     , stack : Int
     , info : String
+    , itemLevel : Int
     }
 
 
@@ -67,6 +69,7 @@ type alias Food =
     , healPoints : Int
     , stack : Int
     , info : String
+    , itemLevel : Int
     }
 
 
@@ -75,6 +78,7 @@ type alias Potion =
     , healPoints : Int
     , stack : Int
     , info : String
+    , itemLevel : Int
     }
 
 
@@ -96,7 +100,7 @@ type WeaponName
 
 
 type FoodName
-    = Beaf
+    = Beef
     | Sushi
     | Onigiri
     | Shrimp
@@ -168,8 +172,8 @@ weaponToString weapon =
 foodToString : Food -> String
 foodToString food =
     case food.item of
-        Beaf ->
-            "Beaf"
+        Beef ->
+            "Beef"
 
         Sushi ->
             "Sushi"
@@ -219,11 +223,12 @@ weaponDamage weapon =
             katana.damage
 
 
-beaf : Food
-beaf =
-    { item = Beaf
+beef : Food
+beef =
+    { item = Beef
     , healPoints = 3
     , stack = 1
+    , itemLevel = 2
     , info = "Roast beef is a traditional dish of beef which is roasted. Essentially prepared as a main meal, the leftovers are often used in sandwiches and sometimes are used to make hash."
     }
 
@@ -233,6 +238,7 @@ sushi =
     { item = Sushi
     , healPoints = 3
     , stack = 1
+    , itemLevel = 2
     , info = "Sushi is traditionally made with medium-grain white rice, though it can be prepared with brown rice or short-grain rice. It is very often prepared with seafood, such as squid, eel, yellowtail, salmon, tuna or imitation crab meat. Many types of sushi are vegetarian. It is often served with pickled ginger (gari), wasabi, and soy sauce. Daikon radish or pickled daikon (takuan) are popular garnishes for the dish."
     }
 
@@ -242,6 +248,7 @@ onigiri =
     { item = Onigiri
     , healPoints = 4
     , stack = 1
+    , itemLevel = 3
     , info = "Onigiri, also known as omusubi, nigirimeshi, or rice ball, is a Japanese food made from white rice formed into triangular or cylindrical shapes and often wrapped in nori."
     }
 
@@ -251,6 +258,7 @@ shrimp =
     { item = Shrimp
     , healPoints = 2
     , stack = 1
+    , itemLevel = 1
     , info = "Shrimp and prawn are types of seafood that are consumed worldwide. Although shrimp and prawns belong to different suborders of Decapoda, they are very similar in appearance and the terms are often used interchangeably in commercial farming and wild fisheries."
     }
 
@@ -260,6 +268,7 @@ lifePot =
     { item = LifePot
     , healPoints = 20
     , stack = 1
+    , itemLevel = 8
     , info = "This is the simplest form healing Potion, it regenerates some Health"
     }
 
@@ -269,6 +278,7 @@ medipack =
     { item = Medipack
     , healPoints = 40
     , stack = 1
+    , itemLevel = 10
     , info = "This pack contains several tool for threating injuries"
     }
 
@@ -278,6 +288,7 @@ milkPot =
     { item = MilkPot
     , healPoints = 40
     , stack = 1
+    , itemLevel = 10
     , info = "Milk (also known in unfermented form as sweet milk) is a nutrient-rich liquid food produced by the mammary glands of mammals."
     }
 
@@ -287,6 +298,7 @@ stick =
     { item = Stick
     , damage = 6
     , stack = 1
+    , itemLevel = 3
     , info = "A simple stick, a pretty bad waepon but stil better then your own fist"
     }
 
@@ -296,6 +308,7 @@ bow =
     { item = Bow
     , damage = 10
     , stack = 1
+    , itemLevel = 5
     , info = "A bow is a ranged weapon"
     }
 
@@ -305,6 +318,7 @@ sword =
     { item = Sword
     , damage = 15
     , stack = 1
+    , itemLevel = 8
     , info = "A sword is a good weapon to defend yourself against monsters"
     }
 
@@ -314,6 +328,7 @@ axe =
     { item = Axe
     , damage = 30
     , stack = 1
+    , itemLevel = 12
     , info = "An axe is an implement that has been used for millennia to shape, split and cut wood, to harvest timber, as a weapon, and as a ceremonial or heraldic symbol. The axe has many forms and specialised uses but generally consists of an axe head with a handle, or helve. LET'S GO AND AXE YOU ENEMIES DOWN !!!"
     }
 
@@ -323,6 +338,7 @@ hammer =
     { item = Hammer
     , damage = 40
     , stack = 1
+    , itemLevel = 14
     , info = "A war hammer is a weapon that was used by both foot-soldiers and cavalry. It is a very ancient weapon and gave its name, owing to its constant use, to Judah Maccabee, a 2nd-century BC Jewish rebel, and to Charles Martel, one of the rulers of France."
     }
 
@@ -332,6 +348,7 @@ superBow =
     { item = SuperBow
     , damage = 40
     , stack = 1
+    , itemLevel = 14
     , info = "This is an enhanced version of the Bow, it deals way more damge then a regular one"
     }
 
@@ -341,6 +358,7 @@ bigSword =
     { item = BigSword
     , damage = 40
     , stack = 1
+    , itemLevel = 14
     , info = "An enhanced version of the sword, it is a sword that is only used by skilled warriors"
     }
 
@@ -350,5 +368,47 @@ katana =
     { item = BigSword
     , damage = 55
     , stack = 1
+    , itemLevel = 18
     , info = "A katana is a Japanese sword characterized by a curved, single-edged blade with a circular or squared guard and long grip to accommodate two hands. Developed later than the tachi, it was used by samurai in feudal Japan and worn with the blade facing upward."
     }
+
+
+items : List Item
+items =
+    [ Foods shrimp
+    , Foods beef
+    , Foods sushi
+    , Foods onigiri
+    , Potions lifePot
+    , Potions medipack
+    , Potions milkPot
+    , Weapons axe
+    , Weapons stick
+    , Weapons bow
+    , Weapons sword
+    , Weapons hammer
+    , Weapons bigSword
+    , Weapons superBow
+    , Weapons katana
+    ]
+
+
+lootTable : Int -> List Item
+lootTable level =
+    List.filter
+        (\item ->
+            let
+                itemLevel =
+                    case item of
+                        Foods food ->
+                            food.itemLevel
+
+                        Potions potion ->
+                            potion.itemLevel
+
+                        Weapons weapon ->
+                            weapon.itemLevel
+            in
+            itemLevel <= level
+        )
+        items
