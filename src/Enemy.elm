@@ -104,7 +104,7 @@ createEnemy level pos enemyT loot =
                 Mole ->
                     [ mole level position loot ]
 
-                _ ->
+                Cyclopes ->
                     [ cyclopes level position loot ]
 
         Nothing ->
@@ -120,7 +120,7 @@ enemyTypeToString enemytype =
         Slime ->
             "slime"
 
-        _ ->
+        Cyclopes ->
             "cyclopes"
 
 

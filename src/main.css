@@ -116,27 +116,18 @@ h1 {
   font-size: 30px;
 }
 
-/* img {
-  margin: 20px 0;
-  max-width: 200px;
-} */
-
 .inventory {
   width: 30rem;
   display: grid;
   grid-template-columns: repeat(8, auto);
   grid-gap: 0.063rem;
-  /* background-color: #2196f3; */
   padding: 0.163rem 0 0.163rem 0.163rem;
 }
 
 .item {
-  /* background-color: rgba(255, 255, 255, 0.8); */
   background-color: rgba(235, 226, 226, 0.8);
   padding: 0.126rem;
   border-radius: 0.126rem;
-  /* height: 4.375rem;
-  width: 4.375rem; */
   height: 4.375rem;
   width: 3.375rem;
 }
@@ -145,7 +136,6 @@ h1 {
   cursor: pointer;
   margin-top: 0.189rem;
   height: 38px;
-  /* width: 38px; */
   image-rendering: pixelated;
 }
 
@@ -158,8 +148,6 @@ h1 {
   padding: 0.126rem;
   display: flex;
   justify-content: space-between;
-  /* margin-left: 1px;
-  margin-right: 1px; */
 }
 
 .usage {
@@ -182,7 +170,6 @@ h1 {
 
 .itemDescIMG {
   height: 45px;
-  /* width: 45px; */
   image-rendering: pixelated;
   margin-bottom: 15px;
 }

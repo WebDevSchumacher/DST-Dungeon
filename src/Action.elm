@@ -40,7 +40,7 @@ updateEnemyOnTick enemy player room =
         Just target ->
             Just ( enemy, target )
 
-        Nothing ->
+        _ ->
             Nothing
 
 
