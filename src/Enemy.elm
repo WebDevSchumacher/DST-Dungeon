@@ -6,7 +6,8 @@ module Enemy exposing
     , getEnemyLookDirImg
     , mole
     , slime
-    , updateEnemyLookDirection
+    , updateLookDirectionOnTarget
+    , updateLookDirectionOnWalk
     )
 
 import Direction exposing (Direction(..))
@@ -19,6 +20,7 @@ type alias Enemy =
     , strengthFactor : Float
     , experience : Int
     , enemyType : EnemyType
+    , prevPosition : ( Int, Int )
     , position : ( Int, Int )
     , lookDirection : Direction
     , enemyIMG : String
@@ -42,6 +44,7 @@ slime level position =
     , strengthFactor = 1.0
     , experience = level * 100
     , enemyType = Slime
+    , prevPosition = position
     , position = position
     , lookDirection = Right
     , enemyIMG = "assets/characters/enemies/slime/Slime_down.png"
@@ -56,6 +59,7 @@ mole level position =
     , strengthFactor = 1.1
     , experience = level * 120
     , enemyType = Mole
+    , prevPosition = position
     , position = position
     , lookDirection = Right
     , enemyIMG = "assets/characters/enemies/mole/Mole_down.png"
@@ -70,6 +74,7 @@ cyclopes level position =
     , strengthFactor = 1.5
     , experience = level * 200
     , enemyType = Cyclopes
+    , prevPosition = position
     , position = position
     , lookDirection = Right
     , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_down.png"
@@ -109,11 +114,27 @@ changeLookDirImgMole direction =
     "assets/characters/enemies/mole/Mole_" ++ Direction.directionToString direction ++ ".png"
 
 
-updateEnemyLookDirection : Enemy -> ( Int, Int ) -> Enemy
-updateEnemyLookDirection enemy point =
+updateLookDirectionOnTarget : Enemy -> ( Int, Int ) -> Enemy
+updateLookDirectionOnTarget enemy point =
     let
         direction =
             Direction.changeLookDirection enemy.position point
+    in
+    case direction of
+        Just dir ->
+            { enemy
+                | lookDirection = dir
+            }
+
+        Nothing ->
+            enemy
+
+
+updateLookDirectionOnWalk : Enemy -> Enemy
+updateLookDirectionOnWalk enemy =
+    let
+        direction =
+            Direction.changeLookDirection enemy.prevPosition enemy.position
     in
     case direction of
         Just dir ->

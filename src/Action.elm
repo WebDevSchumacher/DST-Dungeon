@@ -1,5 +1,6 @@
 module Action exposing
     ( attackDuration
+    , enemyWalkDelay
     , hitEnemy
     , hitPlayer
     , movementDelay
@@ -8,15 +9,20 @@ module Action exposing
     )
 
 import Enemy exposing (Enemy)
+import Item exposing (Weapon)
 import Path
 import Player exposing (Player)
 import RectangularRoom exposing (RectangularRoom)
-import Weapon exposing (Weapon)
 
 
-hitEnemy : Weapon -> Enemy -> Enemy
+hitEnemy : Maybe Weapon -> Enemy -> Enemy
 hitEnemy weapon enemy =
-    { enemy | lifePoints = enemy.lifePoints - Weapon.weaponDamage weapon }
+    case weapon of
+        Nothing ->
+            { enemy | lifePoints = enemy.lifePoints - Item.nonWeaponDamge }
+
+        Just w ->
+            { enemy | lifePoints = enemy.lifePoints - w.damage }
 
 
 hitPlayer : Enemy -> Player -> Player
@@ -54,4 +60,9 @@ walkingDuration =
 
 attackDuration : Float
 attackDuration =
+    200
+
+
+enemyWalkDelay : Float
+enemyWalkDelay =
     200

@@ -80,12 +80,13 @@ rect {
   border: 0.2rem solid #000;
 }
 
-.statusContainer {
+.itemContainer {
   width: 40rem;
-  height: 20rem;
+  height: auto;
   max-width: 40rem;
-  max-height: 20rem;
+  background-color: #62a6dd;
   border: 0.2rem solid #000;
+  border-radius: 0.252rem;
 }
 
 #gameCanvas {
@@ -113,3 +114,73 @@ h1 {
   margin: 20px 0;
   max-width: 200px;
 } */
+
+.inventory {
+  width: 30rem;
+  display: grid;
+  grid-template-columns: repeat(8, auto);
+  grid-gap: 0.063rem;
+  /* background-color: #2196f3; */
+  padding: 0.163rem 0 0.163rem 0.163rem;
+}
+
+.item {
+  /* background-color: rgba(255, 255, 255, 0.8); */
+  background-color: rgba(235, 226, 226, 0.8);
+  padding: 0.126rem;
+  border-radius: 0.126rem;
+  /* height: 4.375rem;
+  width: 4.375rem; */
+  height: 4.375rem;
+  width: 3.375rem;
+}
+
+.itemIMG {
+  cursor: pointer;
+  margin-top: 0.189rem;
+  height: 38px;
+  width: 38px;
+  image-rendering: pixelated;
+}
+
+.itemText,
+.itemUsage {
+  font-size: 10px;
+}
+
+.itemUsage {
+  padding: 0.126rem;
+  display: flex;
+  justify-content: space-between;
+  /* margin-left: 1px;
+  margin-right: 1px; */
+}
+
+.usage {
+  width: 10.5px;
+  height: 10.5px;
+  cursor: pointer;
+  image-rendering: pixelated;
+}
+
+.itemInformation {
+  width: auto;
+  flex-grow: 1;
+  background-color: rgba(149, 200, 211, 0.8);
+  padding: 0.126rem;
+  margin: 0.126rem;
+  border-radius: 0.126rem;
+  height: 23rem;
+  overflow-y: scroll;
+}
+
+.itemDescIMG {
+  height: 45px;
+  width: 45px;
+  image-rendering: pixelated;
+  margin-bottom: 15px;
+}
+
+.itemDesc {
+  margin-top: 10px;
+}

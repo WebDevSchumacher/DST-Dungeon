@@ -7,9 +7,10 @@ import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
-import Html exposing (Attribute, Html, div, h1, text)
-import Html.Attributes exposing (class, id)
+import Html exposing (Attribute, Html, div, h1, h2, img, text)
+import Html.Attributes exposing (class, id, src, style)
 import Html.Events exposing (on)
+import Item exposing (Food, Item(..), Potion, Weapon, WeaponName(..), sushi)
 import Json.Decode as Decode
 import List.Extra
 import Player exposing (Player, PlayerStatus(..))
@@ -25,7 +26,6 @@ import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, widt
 import Task
 import Time
 import Utils
-import Weapon exposing (Weapon(..))
 
 
 type alias Model =
@@ -54,6 +54,8 @@ type Msg
     | Tick
     | Pause
     | TileClick ( Int, Int )
+    | ClickChangeInfoItem Item
+    | ClickRemoveItem Item
     | TileMouseOver ( Int, Int )
 
 
@@ -73,13 +75,13 @@ init =
         { level = 1
         , experience = 0
         , life = 10
-        , inventory = []
-        , weaponInventory = []
-        , currentWeapon = Fist
+        , inventory = [ Foods Item.onigiri, Weapons Item.stick, Potions Item.milkPot ]
+        , currentWeapon = Just Item.axe
         , position = room.center
         , prevPosition = room.center
         , lookDirection = Down
         , playerStatus = Standing
+        , currentInfoItem = Just (Foods Item.onigiri)
         }
     , gameMap = [ room ]
     , currentRoom = room
@@ -308,7 +310,11 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             )
 
         TileClick point ->
-            ( updatePlayerLookDirection model point, Cmd.none )
+            if status == Running then
+                ( updatePlayerLookDirection model point, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
         TileMouseOver _ ->
             ( model, Cmd.none )
@@ -325,7 +331,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                                 List.map
                                     (\e ->
                                         if e == enemy then
-                                            { enemy | position = target }
+                                            Enemy.updateLookDirectionOnWalk { enemy | prevPosition = enemy.position, position = target }
 
                                         else
                                             e
@@ -348,6 +354,37 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                   }
                 , Cmd.none
                 )
+
+        ClickChangeInfoItem item ->
+            ( { model
+                | player =
+                    { player
+                        | currentInfoItem = Just item
+                    }
+              }
+            , Cmd.none
+            )
+
+        ClickRemoveItem item ->
+            ( { model
+                | player =
+                    { player
+                        | inventory = List.Extra.remove item model.player.inventory
+                        , currentInfoItem =
+                            case model.player.currentInfoItem of
+                                Just it ->
+                                    if it == item then
+                                        Nothing
+
+                                    else
+                                        model.player.currentInfoItem
+
+                                _ ->
+                                    Nothing
+                    }
+              }
+            , Cmd.none
+            )
 
 
 updatePlayerLookDirection : Model -> ( Int, Int ) -> Model
@@ -748,10 +785,166 @@ view model =
                 [ div [ class "mapContainer" ] [ h1 [] [ text "World Map" ] ]
 
                 --, div [ class "inventoryContainer" ] [ h1 [] [ text "Inventory" ] ]
-                , div [ class "statusContainer" ] [ h1 [] [ text (statusDisplay model.status) ] ]
+                , div [ class "itemContainer" ]
+                    [ h1 []
+                        [ text "Inventory"
+                        ]
+                    , div
+                        [ style "display" "flex"
+                        , style "flex-direction" "row"
+                        ]
+                        [ div [ class "inventory" ]
+                            ([]
+                                ++ createItemList Item.maxInventory model.player.inventory
+                            )
+                        , div [ class "itemInformation" ]
+                            (createItemInformation model.player.currentInfoItem)
+                        ]
+                    ]
                 ]
             ]
         ]
+
+
+createItemInformation : Maybe Item -> List (Html Msg)
+createItemInformation maybeItem =
+    case maybeItem of
+        Nothing ->
+            [ h2 [] [ text "Item Info" ] ]
+
+        Just item ->
+            case item of
+                Foods f ->
+                    itemInformationFood f
+
+                Potions p ->
+                    itemInformationPotion p
+
+                Weapons w ->
+                    itemInformationWeapon w
+
+
+itemInformationFood : Food -> List (Html Msg)
+itemInformationFood f =
+    [ h2 [] [ text "Item Info" ]
+    , img
+        [ class "itemDescIMG"
+        , src ("assets/items/Food/" ++ Item.foodToString f ++ ".png")
+        ]
+        []
+    , div [ class "itemDescription" ]
+        [ div [] [ text ("Name: " ++ Item.foodToString f) ]
+        , div [] [ text "Type: Food" ]
+        , div [] [ text ("Healpoints: " ++ String.fromInt f.healPoints) ]
+        , div [] [ text ("Stack: " ++ String.fromInt f.stack) ]
+        , div [ class "itemDesc" ] [ text ("Description: " ++ f.info) ]
+        ]
+    ]
+
+
+itemInformationWeapon : Weapon -> List (Html Msg)
+itemInformationWeapon w =
+    [ h2 [] [ text "Item Info" ]
+    , img
+        [ class "itemDescIMG"
+        , src ("assets/items/Weapons/" ++ Item.weaponToString w ++ "/Sprite.png")
+        ]
+        []
+    , div [ class "itemDescription" ]
+        [ div [] [ text ("Name: " ++ Item.weaponToString w) ]
+        , div [] [ text "Type: Weapon" ]
+        , div [] [ text ("Damage: " ++ String.fromInt w.damage) ]
+        , div [] [ text ("Stack: " ++ String.fromInt w.stack) ]
+        , div [ class "itemDesc" ] [ text ("Description: " ++ w.info) ]
+        ]
+    ]
+
+
+itemInformationPotion : Potion -> List (Html Msg)
+itemInformationPotion p =
+    [ h2 [] [ text "Item Info" ]
+    , img
+        [ class "itemDescIMG"
+        , src ("assets/items/Potion/" ++ Item.potionToString p ++ ".png")
+        ]
+        []
+    , div [ class "itemDescription" ]
+        [ div [] [ text ("Name: " ++ Item.potionToString p) ]
+        , div [] [ text "Type: Potion" ]
+        , div [] [ text ("Healpoints: " ++ String.fromInt p.healPoints) ]
+        , div [] [ text ("Stack: " ++ String.fromInt p.stack) ]
+        , div [ class "itemDesc" ] [ text ("Description: " ++ p.info) ]
+        ]
+    ]
+
+
+createItemList : Int -> List Item -> List (Html Msg)
+createItemList maxinventory items =
+    case items of
+        [] ->
+            if maxinventory <= 0 then
+                []
+
+            else
+                div [ class "item" ]
+                    []
+                    :: createItemList (maxinventory - 1) []
+
+        x :: xs ->
+            (case x of
+                Potions p ->
+                    div [ class "item" ]
+                        [ img [ clickChangeInfoItem x, class "itemIMG", src ("assets/items/Potion/" ++ Item.potionToString p ++ ".png") ] []
+                        , div [ class "itemText" ] [ text (Item.potionToString p ++ " (" ++ String.fromInt p.stack ++ ")") ]
+                        , div [ class "itemUsage" ]
+                            [ img [ class "usage itemUse", src "assets/usage/drink.png" ] []
+                            , img [ clickChangeInfoItem x, class "usage itemInfo", src "assets/usage/info.png" ] []
+                            , img [ class "usage itemRemoveOne", src "assets/usage/minus.png" ] []
+                            , img [ clickRemoveItem x, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
+                            ]
+                        ]
+
+                Foods f ->
+                    div [ class "item" ]
+                        [ img [ clickChangeInfoItem x, class "itemIMG", src ("assets/items/Food/" ++ Item.foodToString f ++ ".png") ] []
+                        , div [ class "itemText" ] [ text (Item.foodToString f ++ " (" ++ String.fromInt f.stack ++ ")") ]
+                        , div [ class "itemUsage" ]
+                            [ img [ class "usage itemUse", src "assets/usage/eat.png" ] []
+                            , img [ clickChangeInfoItem x, class "usage itemInfo", src "assets/usage/info.png" ] []
+                            , img [ class "usage itemRemoveOne", src "assets/usage/minus.png" ] []
+                            , img [ clickRemoveItem x, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
+                            ]
+                        ]
+
+                Weapons w ->
+                    div [ class "item" ]
+                        [ img [ clickChangeInfoItem x, class "itemIMG", src ("assets/items/Weapons/" ++ Item.weaponToString w ++ "/Sprite.png") ] []
+                        , div [ class "itemText" ] [ text (Item.weaponToString w ++ " (" ++ String.fromInt w.stack ++ ")") ]
+                        , div [ class "itemUsage" ]
+                            [ img [ class "usage itemUse", src "assets/usage/hand.png" ] []
+                            , img [ clickChangeInfoItem x, class "usage itemInfo", src "assets/usage/info.png" ] []
+                            , img [ class "usage itemRemoveOne", src "assets/usage/minus.png" ] []
+                            , img [ clickRemoveItem x, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
+                            ]
+                        ]
+            )
+                :: createItemList (maxinventory - 1) xs
+
+
+clickRemoveItem : Item -> Html.Attribute Msg
+clickRemoveItem item =
+    on "click" (Decode.succeed (ClickRemoveItem item))
+
+
+clickChangeInfoItem : Item -> Html.Attribute Msg
+clickChangeInfoItem item =
+    on "click" (Decode.succeed (ClickChangeInfoItem item))
+
+
+
+-- clickEquipItem : Weapon -> Html.Attribute Msg
+-- clickEquipItem weapon =
+--     on "click" (Decode.succeed (ClickEquipItem item))
 
 
 clickTile : ( Int, Int ) -> Html.Attribute Msg
@@ -799,7 +992,7 @@ tickSubscription : Model -> Sub Msg
 tickSubscription model =
     case model.status of
         Running ->
-            Time.every 400 (\_ -> Tick)
+            Time.every 700 (\_ -> Tick)
 
         Paused ->
             Sub.none

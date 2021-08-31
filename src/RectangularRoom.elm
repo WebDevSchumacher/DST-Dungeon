@@ -226,5 +226,5 @@ updateEnemyLookDirectionInRoom : Enemy -> ( Int, Int ) -> RectangularRoom -> Rec
 updateEnemyLookDirectionInRoom enemy pos currentRoom =
     { currentRoom
         | enemies =
-            List.Extra.setIf (\en -> en.position == enemy.position) (Enemy.updateEnemyLookDirection enemy pos) currentRoom.enemies
+            List.Extra.setIf (\en -> en.position == enemy.position) (Enemy.updateLookDirectionOnTarget enemy pos) currentRoom.enemies
     }
