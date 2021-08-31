@@ -139,7 +139,7 @@ h1 {
   cursor: pointer;
   margin-top: 0.189rem;
   height: 38px;
-  width: 38px;
+  /* width: 38px; */
   image-rendering: pixelated;
 }
 
