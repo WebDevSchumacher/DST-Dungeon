@@ -43,13 +43,13 @@ type Msg
     | GenerateRoom ( Int, Int ) ( Int, Int ) (List ( Int, Int ))
     | EnemyMovement Enemy ( Int, Int )
     | PlayerStatusToStanding
-    | PlaceEnemy ( Int, EnemyType, RectangularRoom )
+    | PlaceEnemy ( Int, EnemyType, RectangularRoom ) (List Item)
     | AttackEnemy Enemy
     | AttackPlayer Enemy
     | GainExperience Enemy
     | LevelUp Player
     | EnterGate Gate
-    | EnterRoom RectangularRoom
+    | EnterRoom RectangularRoom (List Item)
     | Die
     | Tick
     | Pause
@@ -118,7 +118,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                         RectangularRoom.generate location size obstacles player.level
                 in
                 ( { model | gameMap = room :: model.gameMap }
-                , msgToCmdMsg (EnterRoom room)
+                , msgToCmdMsg (EnterRoom room [])
                 )
 
         PlayerStatusToStanding ->
@@ -174,7 +174,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             case maybeRoom of
                 Just room ->
                     ( model
-                    , msgToCmdMsg (EnterRoom room)
+                    , msgToCmdMsg (EnterRoom room [])
                     )
 
                 Nothing ->
@@ -182,9 +182,9 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                     , generateRoomWidthHeight roomCoords
                     )
 
-        PlaceEnemy ( indexPosition, enemyType, room ) ->
+        PlaceEnemy ( indexPosition, enemyType, room ) loot ->
             ( if not (room.location == ( 0, 0 )) then
-                addEnemyToModel ( indexPosition, enemyType, room ) model
+                addEnemyToModel indexPosition enemyType room loot model
 
               else
                 model
@@ -255,37 +255,45 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
         None ->
             ( model, Cmd.none )
 
-        EnterRoom room ->
-            case roomTransition of
-                Just direction ->
-                    let
-                        entrance =
-                            List.Extra.find (\gate -> Utils.oppositeDirection gate.direction == direction) room.gates
-                    in
-                    case entrance of
-                        Just gate ->
-                            let
-                                playerPos =
-                                    movePoint direction gate.location
-                            in
-                            ( { model
-                                | currentRoom = room
-                                , roomTransition = Nothing
-                                , player =
-                                    { player
-                                        | position = playerPos
-                                        , prevPosition = playerPos
-                                        , lookDirection = Direction.oppositeDirection gate.direction
-                                    }
-                              }
-                            , placeEnemy room
-                            )
+        EnterRoom room items ->
+            let
+                lootLevel =
+                    Item.lootTableLevel items 0
+            in
+            if lootLevel < room.level then
+                ( model, generateItem room items lootLevel )
 
-                        Nothing ->
-                            ( model, Cmd.none )
+            else
+                case roomTransition of
+                    Just direction ->
+                        let
+                            entrance =
+                                List.Extra.find (\gate -> Utils.oppositeDirection gate.direction == direction) room.gates
+                        in
+                        case entrance of
+                            Just gate ->
+                                let
+                                    playerPos =
+                                        movePoint direction gate.location
+                                in
+                                ( { model
+                                    | currentRoom = room
+                                    , roomTransition = Nothing
+                                    , player =
+                                        { player
+                                            | position = playerPos
+                                            , prevPosition = playerPos
+                                            , lookDirection = Direction.oppositeDirection gate.direction
+                                        }
+                                  }
+                                , placeEnemy room items
+                                )
 
-                Nothing ->
-                    ( model, Cmd.none )
+                            Nothing ->
+                                ( model, Cmd.none )
+
+                    Nothing ->
+                        ( model, Cmd.none )
 
         Die ->
             ( { model | status = Dead, player = Player.playerStatusToDead player }, Cmd.none )
@@ -420,11 +428,11 @@ updateOnTick ({ currentRoom, player } as model) =
     )
 
 
-addEnemyToModel : ( Int, EnemyType, RectangularRoom ) -> Model -> Model
-addEnemyToModel ( indexPos, enemyT, room ) model =
+addEnemyToModel : Int -> EnemyType -> RectangularRoom -> List Item -> Model -> Model
+addEnemyToModel indexPos enemyT room loot model =
     let
         updatedRoom =
-            { room | enemies = Enemy.createEnemy room.level (List.Extra.getAt indexPos room.inner) enemyT ++ room.enemies }
+            { room | enemies = Enemy.createEnemy room.level (List.Extra.getAt indexPos room.inner) enemyT loot ++ room.enemies }
     in
     { model
         | currentRoom = updatedRoom
@@ -1083,9 +1091,11 @@ generateObstacleCoord location ( width, height ) coords =
 ---- PLACE ENEMIES ----
 
 
-placeEnemy : RectangularRoom -> Cmd Msg
-placeEnemy room =
-    Random.generate (\x -> PlaceEnemy x) (enemyGenerator room)
+placeEnemy : RectangularRoom -> List Item -> Cmd Msg
+placeEnemy room items =
+    Random.generate
+        (\x -> PlaceEnemy x items)
+        (enemyGenerator room)
 
 
 enemyGenerator : RectangularRoom -> Random.Generator ( Int, EnemyType, RectangularRoom )
@@ -1097,6 +1107,34 @@ enemyGenerator room =
 randomEnemy : Random.Generator EnemyType
 randomEnemy =
     Random.weighted ( 80, Slime ) [ ( 20, Cyclopes ), ( 40, Mole ) ]
+
+
+generateItem : RectangularRoom -> List Item -> Int -> Cmd Msg
+generateItem room loot level =
+    let
+        maybeItemGenerator =
+            randomItem (room.level - level)
+    in
+    case maybeItemGenerator of
+        Just generator ->
+            Random.generate (\item -> EnterRoom room (item :: loot)) generator
+
+        Nothing ->
+            msgToCmdMsg (EnterRoom room loot)
+
+
+randomItem : Int -> Maybe (Random.Generator Item)
+randomItem level =
+    let
+        loot =
+            Item.lootTable level
+    in
+    case loot of
+        item :: rest ->
+            Just (Random.uniform item rest)
+
+        [] ->
+            Nothing
 
 
 

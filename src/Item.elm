@@ -16,6 +16,7 @@ module Item exposing
     , katana
     , lifePot
     , lootTable
+    , lootTableLevel
     , maxInventory
     , maxStack
     , medipack
@@ -393,22 +394,32 @@ items =
     ]
 
 
+itemLevel item =
+    case item of
+        Foods food ->
+            food.itemLevel
+
+        Potions potion ->
+            potion.itemLevel
+
+        Weapons weapon ->
+            weapon.itemLevel
+
+
 lootTable : Int -> List Item
 lootTable level =
     List.filter
         (\item ->
-            let
-                itemLevel =
-                    case item of
-                        Foods food ->
-                            food.itemLevel
-
-                        Potions potion ->
-                            potion.itemLevel
-
-                        Weapons weapon ->
-                            weapon.itemLevel
-            in
-            itemLevel <= level
+            itemLevel item <= level
         )
         items
+
+
+lootTableLevel : List Item -> Int -> Int
+lootTableLevel loot acc =
+    case loot of
+        item :: rest ->
+            lootTableLevel rest (acc + itemLevel item)
+
+        [] ->
+            acc
