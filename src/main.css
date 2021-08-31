@@ -176,7 +176,7 @@ h1 {
 
 .itemDescIMG {
   height: 45px;
-  width: 45px;
+  /* width: 45px; */
   image-rendering: pixelated;
   margin-bottom: 15px;
 }
