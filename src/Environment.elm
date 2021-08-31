@@ -5,6 +5,7 @@ module Environment exposing
     , floorAssetPath
     , gateAssetPath
     , numberRooms
+    , obstacleAssetPath
     , playerBoundBox
     , roomMaxHeight
     , roomMaxWidth
@@ -12,7 +13,6 @@ module Environment exposing
     , roomMinWidth
     , screenHeight
     , screenWidth
-    , wallAssetPath
     , wallCount
     , wallLength
     )
@@ -88,9 +88,9 @@ floorAssetPath =
     "assets/tiles/floor.png"
 
 
-wallAssetPath : String
-wallAssetPath =
-    "assets/tiles/wall.png"
+obstacleAssetPath : String
+obstacleAssetPath =
+    "assets/tiles/obstacle.png"
 
 
 gateAssetPath : String

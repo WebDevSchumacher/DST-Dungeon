@@ -151,7 +151,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                                     ( { model
                                         | player = movePlayer direction model
                                       }
-                                    , delayCmdMsg Action.walkingDuration PlayerStatusToStanding
+                                    , delayCmdMsg Action.playerWalkingDuration PlayerStatusToStanding
                                     )
 
                                 Just enemy ->
@@ -544,6 +544,7 @@ playerToSvg { position, prevPosition, lookDirection, playerStatus } =
     in
     animatedG
         (walkAnim
+            Action.playerWalkingDuration
             prevPosition
             position
         )
@@ -562,6 +563,55 @@ playerToSvg { position, prevPosition, lookDirection, playerStatus } =
                 []
             ]
         ]
+
+
+enemiesToSvg : Status -> List Enemy -> List (Svg Msg)
+enemiesToSvg status enemies =
+    case enemies of
+        [] ->
+            []
+
+        em :: ems ->
+            let
+                imgSrc =
+                    Enemy.imgSrc em em.lookDirection
+
+                widthIMG =
+                    String.fromInt (Environment.playerBoundBox * 4)
+
+                vwBox =
+                    Direction.getViewBoxFromDirection em.lookDirection
+
+                emClass =
+                    if status == Running then
+                        "enemy_Walking"
+
+                    else
+                        "enemy_Standing"
+            in
+            case em of
+                { position, prevPosition } ->
+                    animatedG
+                        (walkAnim
+                            Action.enemyWalkingDuration
+                            prevPosition
+                            position
+                        )
+                        []
+                        [ svg
+                            [ width (String.fromInt Environment.playerBoundBox)
+                            , viewBox vwBox
+                            , height (String.fromInt Environment.playerBoundBox)
+                            ]
+                            [ image
+                                [ Svg.Attributes.class emClass
+                                , width widthIMG
+                                , xlinkHref imgSrc
+                                ]
+                                []
+                            ]
+                        ]
+                        :: enemiesToSvg status ems
 
 
 
@@ -661,13 +711,13 @@ drawGateWalls gateCoord dir =
 -- Simple animation usage
 
 
-walkAnim : ( Int, Int ) -> ( Int, Int ) -> Animation
-walkAnim ( prevX, prevY ) ( x, y ) =
+walkAnim : Float -> ( Int, Int ) -> ( Int, Int ) -> Animation
+walkAnim walkingDuration ( prevX, prevY ) ( x, y ) =
     Animation.steps
         { startAt = [ P.x (toFloat prevX), P.y (toFloat prevY - Environment.entityOffsetY) ]
         , options = [ Animation.linear ]
         }
-        [ Animation.step (round Action.walkingDuration) [ P.x (toFloat x), P.y (toFloat y - Environment.entityOffsetY) ]
+        [ Animation.step (round walkingDuration) [ P.x (toFloat x), P.y (toFloat y - Environment.entityOffsetY) ]
         ]
 
 
@@ -687,31 +737,6 @@ animatedSvg =
 ----
 
 
-enemiesToSvg : List Enemy -> List (Svg Msg)
-enemiesToSvg enemies =
-    case enemies of
-        [] ->
-            []
-
-        em :: ems ->
-            let
-                imgSrc =
-                    Enemy.getEnemyLookDirImg em em.lookDirection
-            in
-            case em of
-                { position } ->
-                    image
-                        [ x (String.fromInt (Tuple.first position))
-                        , y (fromFloat (toFloat (Tuple.second position) - Environment.entityOffsetY))
-                        , width (String.fromInt Environment.playerBoundBox)
-                        , height (String.fromInt Environment.playerBoundBox)
-                        , fill "green"
-                        , xlinkHref imgSrc
-                        ]
-                        []
-                        :: enemiesToSvg ems
-
-
 svgCanvasStyle : List (Attribute msg)
 svgCanvasStyle =
     [ width (String.fromInt Environment.screenWidth)
@@ -725,7 +750,7 @@ drawSVGRoom : RectangularRoom -> List (Svg Msg)
 drawSVGRoom room =
     drawTiles room.inner Environment.floorAssetPath
         ++ drawTiles (List.map (\gate -> gate.location) room.gates) Environment.gateAssetPath
-        ++ drawTiles room.walls Environment.wallAssetPath
+        ++ drawTiles room.walls Environment.obstacleAssetPath
 
 
 drawTiles : List ( Int, Int ) -> String -> List (Svg Msg)
@@ -778,7 +803,7 @@ view model =
                         ++ drawSVGRoom model.currentRoom
                         ++ playerToSvg
                             model.player
-                        :: enemiesToSvg model.currentRoom.enemies
+                        :: enemiesToSvg model.status model.currentRoom.enemies
                     )
                 ]
             , div [ class "dialogContainer" ]

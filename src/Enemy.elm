@@ -3,7 +3,7 @@ module Enemy exposing
     , EnemyType(..)
     , createEnemy
     , cyclopes
-    , getEnemyLookDirImg
+    , imgSrc
     , mole
     , slime
     , updateLookDirectionOnTarget
@@ -11,6 +11,12 @@ module Enemy exposing
     )
 
 import Direction exposing (Direction(..))
+
+
+type EnemyStatus
+    = Walking
+    | Attacking
+    | Standing
 
 
 type alias Enemy =
@@ -24,6 +30,7 @@ type alias Enemy =
     , position : ( Int, Int )
     , lookDirection : Direction
     , enemyIMG : String
+    , status : EnemyStatus
     }
 
 
@@ -47,7 +54,8 @@ slime level position =
     , prevPosition = position
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/slime/Slime_down.png"
+    , enemyIMG = "assets/characters/enemies/slime/Walk.png"
+    , status = Walking
     }
 
 
@@ -62,7 +70,8 @@ mole level position =
     , prevPosition = position
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/mole/Mole_down.png"
+    , enemyIMG = "assets/characters/enemies/mole/Walk.png"
+    , status = Walking
     }
 
 
@@ -77,7 +86,8 @@ cyclopes level position =
     , prevPosition = position
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/cyclopes/Cyclopes_down.png"
+    , enemyIMG = "assets/characters/enemies/cyclopes/Walk.png"
+    , status = Walking
     }
 
 
@@ -99,19 +109,35 @@ createEnemy level pos enemyT =
             []
 
 
-changeLookDirImgSlime : Direction -> String
-changeLookDirImgSlime direction =
-    "assets/characters/enemies/slime/Slime_" ++ Direction.directionToString direction ++ ".png"
+enemyTypeToString : EnemyType -> String
+enemyTypeToString enemytype =
+    case enemytype of
+        Mole ->
+            "mole"
+
+        Slime ->
+            "slime"
+
+        _ ->
+            "cyclopes"
 
 
-changeLookDirImgCyclopes : Direction -> String
-changeLookDirImgCyclopes direction =
-    "assets/characters/enemies/cyclopes/Cyclopes_" ++ Direction.directionToString direction ++ ".png"
+enemyStatusToString : EnemyStatus -> String
+enemyStatusToString status =
+    case status of
+        Attacking ->
+            "Attacking"
+
+        Standing ->
+            "Standing"
+
+        Walking ->
+            "Walking"
 
 
-changeLookDirImgMole : Direction -> String
-changeLookDirImgMole direction =
-    "assets/characters/enemies/mole/Mole_" ++ Direction.directionToString direction ++ ".png"
+imgSrc : Enemy -> Direction -> String
+imgSrc enemy direction =
+    "assets/characters/enemies/" ++ enemyTypeToString enemy.enemyType ++ "/Walk.png"
 
 
 updateLookDirectionOnTarget : Enemy -> ( Int, Int ) -> Enemy
@@ -144,19 +170,3 @@ updateLookDirectionOnWalk enemy =
 
         Nothing ->
             enemy
-
-
-getEnemyLookDirImg : Enemy -> Direction -> String
-getEnemyLookDirImg enemy dir =
-    case enemy.enemyType of
-        Mole ->
-            changeLookDirImgMole dir
-
-        Cyclopes ->
-            changeLookDirImgCyclopes dir
-
-        Slime ->
-            changeLookDirImgSlime dir
-
-        _ ->
-            changeLookDirImgCyclopes dir

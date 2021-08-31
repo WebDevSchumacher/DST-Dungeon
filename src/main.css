@@ -12,11 +12,11 @@
 #player_Walking_up,
 #player_Walking_left,
 #player_Walking_right {
-  animation: moveSpritePlayer 0.3s steps(4) infinite;
+  animation: moveSprite 0.3s steps(4) infinite;
   image-rendering: pixelated;
 }
 
-@keyframes moveSpritePlayer {
+@keyframes moveSprite {
   from {
     tranform: translate3d(0, 0px, 0);
   }
@@ -26,10 +26,16 @@
   }
 }
 
+.enemy_Standing,
 #player_Standing_down,
 #player_Standing_up,
 #player_Standing_left,
 #player_Standing_right {
+  image-rendering: pixelated;
+}
+
+.enemy_Walking {
+  animation: moveSprite 1.5s steps(4) infinite;
   image-rendering: pixelated;
 }
 
