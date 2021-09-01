@@ -1,4 +1,4 @@
-module Player exposing (Player, PlayerStatus(..), changeImgSrc, playerStatusToAttacking, playerStatusToDead, playerStatusToStanding, playerStatusToString)
+module Player exposing (Player, PlayerStatus(..), changeImgSrc, playerChangeWeapon, playerStatusToAttacking, playerStatusToDead, playerStatusToStanding, playerStatusToString)
 
 import Direction exposing (Direction(..))
 import Item exposing (Item(..), Weapon)
@@ -77,4 +77,11 @@ playerStatusToDead : Player -> Player
 playerStatusToDead player =
     { player
         | playerStatus = Dead
+    }
+
+
+playerChangeWeapon : Player -> Weapon -> Player
+playerChangeWeapon player weapon =
+    { player
+        | currentWeapon = Just weapon
     }

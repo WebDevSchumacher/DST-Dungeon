@@ -19,7 +19,7 @@ hitEnemy : Maybe Weapon -> Enemy -> Enemy
 hitEnemy weapon enemy =
     case weapon of
         Nothing ->
-            { enemy | lifePoints = enemy.lifePoints - Item.nonWeaponDamge }
+            { enemy | lifePoints = enemy.lifePoints - Item.nonWeaponDamage }
 
         Just w ->
             { enemy | lifePoints = enemy.lifePoints - w.damage }

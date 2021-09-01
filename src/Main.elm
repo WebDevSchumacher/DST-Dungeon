@@ -7,7 +7,7 @@ import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
 import GameMap exposing (GameMap)
-import Html exposing (Attribute, Html, div, h1, h2, img, text)
+import Html exposing (Attribute, Html, div, h1, h2, img, p, table, td, text, tr)
 import Html.Attributes exposing (class, id, src, style)
 import Html.Events exposing (on)
 import Item exposing (Food, Item(..), Potion, Weapon, WeaponName(..), sushi)
@@ -56,6 +56,7 @@ type Msg
     | TileClick ( Int, Int )
     | ClickChangeInfoItem Item
     | ClickRemoveItem Item
+    | ClickEquipWeapon Weapon
     | TileMouseOver ( Int, Int )
 
 
@@ -390,6 +391,14 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                                 _ ->
                                     Nothing
                     }
+              }
+            , Cmd.none
+            )
+
+        ClickEquipWeapon weapon ->
+            ( { model
+                | player =
+                    Player.playerChangeWeapon model.player weapon
               }
             , Cmd.none
             )
@@ -783,62 +792,6 @@ drawTiles ls path =
             []
 
 
-statusDisplay : Status -> String
-statusDisplay status =
-    case status of
-        Running ->
-            "RUNNING"
-
-        Paused ->
-            "PAUSED"
-
-        Dead ->
-            "DEAD"
-
-
-view : Model -> Html Msg
-view model =
-    div []
-        [ div [ class "mainContainer" ]
-            [ div [ class "gameContainer" ]
-                [ svg
-                    (id "gameCanvas" :: svgCanvasStyle)
-                    (rect
-                        (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
-                        []
-                        :: generateGridlines
-                        ++ drawOuterWalls model.currentRoom.outerWalls
-                        ++ drawSVGRoom model.currentRoom
-                        ++ playerToSvg
-                            model.player
-                        :: enemiesToSvg model.status model.currentRoom.enemies
-                    )
-                ]
-            , div [ class "dialogContainer" ]
-                [ div [ class "mapContainer" ] [ h1 [] [ text "World Map" ] ]
-
-                --, div [ class "inventoryContainer" ] [ h1 [] [ text "Inventory" ] ]
-                , div [ class "itemContainer" ]
-                    [ h1 []
-                        [ text "Inventory"
-                        ]
-                    , div
-                        [ style "display" "flex"
-                        , style "flex-direction" "row"
-                        ]
-                        [ div [ class "inventory" ]
-                            ([]
-                                ++ createItemList Item.maxInventory model.player.inventory
-                            )
-                        , div [ class "itemInformation" ]
-                            (createItemInformation model.player.currentInfoItem)
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-
 createItemInformation : Maybe Item -> List (Html Msg)
 createItemInformation maybeItem =
     case maybeItem of
@@ -954,7 +907,7 @@ createItemList maxinventory items =
                         [ img [ clickChangeInfoItem x, class "itemIMG", src ("assets/items/Weapons/" ++ Item.weaponToString w ++ "/Sprite.png") ] []
                         , div [ class "itemText" ] [ text (Item.weaponToString w ++ " (" ++ String.fromInt w.stack ++ ")") ]
                         , div [ class "itemUsage" ]
-                            [ img [ class "usage itemUse", src "assets/usage/hand.png" ] []
+                            [ img [ clickEquipWeapon w, class "usage itemUse", src "assets/usage/hand.png" ] []
                             , img [ clickChangeInfoItem x, class "usage itemInfo", src "assets/usage/info.png" ] []
                             , img [ class "usage itemRemoveOne", src "assets/usage/minus.png" ] []
                             , img [ clickRemoveItem x, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
@@ -962,6 +915,127 @@ createItemList maxinventory items =
                         ]
             )
                 :: createItemList (maxinventory - 1) xs
+
+
+statusDisplay : Status -> String
+statusDisplay status =
+    case status of
+        Running ->
+            "RUNNING"
+
+        Paused ->
+            "PAUSED"
+
+        Dead ->
+            "DEAD"
+
+
+displayPlayerStats : Status -> Player -> Html Msg
+displayPlayerStats status player =
+    div
+        [ class "statsContainer" ]
+        [ Html.h3 [] [ text "Character Stats" ]
+        , div [ class "faceSetBox" ] [ img [ src "assets/HUD/Face.png" ] [] ]
+        , table []
+            [ tr [] [ td [] [ text "Level:" ], td [] [ text (String.fromInt player.level) ] ]
+            , tr [] [ td [] [ text "Health: " ], td [] [ text (String.fromInt player.life) ] ]
+            , tr []
+                [ td [] [ text "Atk: " ]
+                , td []
+                    [ text
+                        (case player.currentWeapon of
+                            Nothing ->
+                                String.fromInt Item.nonWeaponDamage
+
+                            Just weapon ->
+                                String.fromInt weapon.damage
+                        )
+                    ]
+                ]
+            , tr []
+                [ td [] [ text "Experience: " ]
+                , td [] [ text (String.fromInt player.experience) ]
+                ]
+            , tr []
+                [ td [] [ text "Weapon: " ]
+                , td []
+                    [ text
+                        (case player.currentWeapon of
+                            Nothing ->
+                                "Fist (No Weapon)"
+
+                            Just weapon ->
+                                Item.weaponToString weapon
+                        )
+                    ]
+                ]
+            , tr []
+                [ td [] [ text "Status: " ]
+                , td []
+                    [ text
+                        (if status == Dead then
+                            "Dead"
+
+                         else
+                            "Alive"
+                        )
+                    ]
+                ]
+            ]
+        ]
+
+
+displayHistory : Model -> Html Msg
+displayHistory model =
+    div
+        [ class "historyContainer" ]
+        [ Html.h3 [] [ text "History" ] ]
+
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ div [ class "mainContainer" ]
+            [ div [ class "gameContainer" ]
+                [ svg
+                    (id "gameCanvas" :: svgCanvasStyle)
+                    (rect
+                        (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
+                        []
+                        :: generateGridlines
+                        ++ drawOuterWalls model.currentRoom.outerWalls
+                        ++ drawSVGRoom model.currentRoom
+                        ++ playerToSvg
+                            model.player
+                        :: enemiesToSvg model.status model.currentRoom.enemies
+                    )
+                ]
+            , div [ class "dialogContainer" ]
+                [ div [ class "statsAndHistoryContainer" ]
+                    [ displayPlayerStats model.status model.player
+                    , displayHistory model
+                    ]
+
+                --, div [ class "inventoryContainer" ] [ h1 [] [ text "Inventory" ] ]
+                , div [ class "itemContainer" ]
+                    [ h1 []
+                        [ text "Inventory"
+                        ]
+                    , div
+                        [ style "display" "flex"
+                        , style "flex-direction" "row"
+                        ]
+                        [ div [ class "inventory" ]
+                            ([]
+                                ++ createItemList Item.maxInventory model.player.inventory
+                            )
+                        , div [ class "itemInformation" ]
+                            (createItemInformation model.player.currentInfoItem)
+                        ]
+                    ]
+                ]
+            ]
+        ]
 
 
 clickRemoveItem : Item -> Html.Attribute Msg
@@ -974,10 +1048,9 @@ clickChangeInfoItem item =
     on "click" (Decode.succeed (ClickChangeInfoItem item))
 
 
-
--- clickEquipItem : Weapon -> Html.Attribute Msg
--- clickEquipItem weapon =
---     on "click" (Decode.succeed (ClickEquipItem item))
+clickEquipWeapon : Weapon -> Html.Attribute Msg
+clickEquipWeapon weapon =
+    on "click" (Decode.succeed (ClickEquipWeapon weapon))
 
 
 clickTile : ( Int, Int ) -> Html.Attribute Msg

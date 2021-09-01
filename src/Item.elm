@@ -21,7 +21,7 @@ module Item exposing
     , maxStack
     , medipack
     , milkPot
-    , nonWeaponDamge
+    , nonWeaponDamage
     , onigiri
     , potionToString
     , shrimp
@@ -34,8 +34,8 @@ module Item exposing
     )
 
 
-nonWeaponDamge : Int
-nonWeaponDamge =
+nonWeaponDamage : Int
+nonWeaponDamage =
     5
 
 
@@ -366,7 +366,7 @@ bigSword =
 
 katana : Weapon
 katana =
-    { item = BigSword
+    { item = Katana
     , damage = 55
     , stack = 1
     , itemLevel = 18
