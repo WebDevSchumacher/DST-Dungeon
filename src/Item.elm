@@ -4,10 +4,12 @@ module Item exposing
     , Potion
     , Weapon
     , WeaponName(..)
+    , addLoot
     , axe
     , beef
     , bigSword
     , bow
+    , filterItem
     , foodToString
     , hammer
     , isItemInList
@@ -423,3 +425,162 @@ lootTableLevel loot acc =
 
         [] ->
             acc
+
+
+
+{--
+This is the most stupid thing, but idk how to do it better.
+I tried to make a Type Item and the subtypes Potions, Foods & Weapons which are in Item
+(Something like Inheretance in OOP, but that works the opposite way in elm, now I have to declare everything for every case, I
+have to write a function that does the almost some just for all subtypes Foods, Potions & Weapons.
+
+Should have just put the ItemType as a property one Single Item class, but the Problem is that we
+have properties in Item that are for example from Weapons, but that we dont need in Potions and Foods vice versa)
+--}
+
+
+filterItem : List Item -> List Item
+filterItem itemList =
+    List.filter
+        (\item ->
+            case item of
+                Foods f ->
+                    f.stack > 0
+
+                Potions p ->
+                    p.stack > 0
+
+                Weapons w ->
+                    w.stack > 0
+        )
+        itemList
+
+
+addPotion : List Item -> Potion -> List Item
+addPotion itemList potion =
+    List.map
+        (\item ->
+            case item of
+                Potions p ->
+                    if p == potion then
+                        Potions { p | stack = p.stack + 1 }
+
+                    else
+                        item
+
+                _ ->
+                    item
+        )
+        itemList
+
+
+addWeapon : List Item -> Weapon -> List Item
+addWeapon itemList weapon =
+    List.map
+        (\item ->
+            case item of
+                Weapons w ->
+                    if w == weapon then
+                        Weapons { w | stack = w.stack + 1 }
+
+                    else
+                        item
+
+                _ ->
+                    item
+        )
+        itemList
+
+
+addFood : List Item -> Food -> List Item
+addFood itemList food =
+    List.map
+        (\item ->
+            case item of
+                Foods f ->
+                    if f == food then
+                        Foods { f | stack = f.stack + 1 }
+
+                    else
+                        item
+
+                _ ->
+                    item
+        )
+        itemList
+
+
+addLoot : List Item -> List Item -> List Item
+addLoot inventory loot =
+    case loot of
+        [] ->
+            inventory
+
+        l :: ls ->
+            let
+                newInventory =
+                    case l of
+                        Potions p ->
+                            if isPotionInList inventory p then
+                                addPotion inventory p
+
+                            else
+                                l :: inventory
+
+                        Foods f ->
+                            if isFoodInList inventory f then
+                                addFood inventory f
+
+                            else
+                                l :: inventory
+
+                        Weapons w ->
+                            if isWeaponInList inventory w then
+                                addWeapon inventory w
+
+                            else
+                                l :: inventory
+            in
+            addLoot newInventory ls
+
+
+isFoodInList : List Item -> Food -> Bool
+isFoodInList inventory food =
+    List.any
+        (\item ->
+            case item of
+                Foods f ->
+                    food.item == f.item
+
+                _ ->
+                    False
+        )
+        inventory
+
+
+isWeaponInList : List Item -> Weapon -> Bool
+isWeaponInList inventory weapon =
+    List.any
+        (\item ->
+            case item of
+                Weapons w ->
+                    weapon.item == w.item
+
+                _ ->
+                    False
+        )
+        inventory
+
+
+isPotionInList : List Item -> Potion -> Bool
+isPotionInList inventory potion =
+    List.any
+        (\item ->
+            case item of
+                Potions p ->
+                    potion.item == p.item
+
+                _ ->
+                    False
+        )
+        inventory

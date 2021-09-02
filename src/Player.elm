@@ -107,7 +107,7 @@ playerUseFood player food =
                 player.inventory
     in
     { player
-        | inventory = filterItem newItemList
+        | inventory = Item.filterItem newItemList
         , life = player.life + food.healPoints
     }
 
@@ -132,23 +132,6 @@ playerUsePotion player potion =
                 player.inventory
     in
     { player
-        | inventory = filterItem newItemList
+        | inventory = Item.filterItem newItemList
         , life = player.life + potion.healPoints
     }
-
-
-filterItem : List Item -> List Item
-filterItem items =
-    List.filter
-        (\item ->
-            case item of
-                Foods f ->
-                    f.stack > 0
-
-                Potions p ->
-                    p.stack > 0
-
-                Weapons w ->
-                    w.stack > 0
-        )
-        items
