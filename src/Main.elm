@@ -474,7 +474,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                     { currentRoom | chests = List.Extra.filterNot (\c -> c.location == chest.location) currentRoom.chests }
             in
             ( { model
-                | player = { player | inventory = player.inventory ++ chest.loot }
+                | player = { player | inventory = Utils.itemsToInventory player.inventory chest.loot }
                 , currentRoom = updatedRoom
                 , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom gameMap
               }
