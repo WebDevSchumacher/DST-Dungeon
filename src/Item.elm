@@ -462,7 +462,7 @@ addPotion itemList potion =
         (\item ->
             case item of
                 Potions p ->
-                    if p == potion then
+                    if p.item == potion.item then
                         Potions { p | stack = p.stack + 1 }
 
                     else
@@ -480,7 +480,7 @@ addWeapon itemList weapon =
         (\item ->
             case item of
                 Weapons w ->
-                    if w == weapon then
+                    if w.item == weapon.item then
                         Weapons { w | stack = w.stack + 1 }
 
                     else
@@ -498,8 +498,8 @@ addFood itemList food =
         (\item ->
             case item of
                 Foods f ->
-                    if f == food then
-                        Foods { f | stack = f.stack + 1 }
+                    if f.item == food.item then
+                        Foods { f | stack = f.stack + 3 }
 
                     else
                         item

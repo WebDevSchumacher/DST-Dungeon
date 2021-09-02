@@ -2,13 +2,13 @@ module Utils exposing
     ( experienceToLevelUp
     , gainExperience
     , levelUp
-    , lootEnemy
     , oppositeDirection
     )
 
 import Direction exposing (Direction(..))
 import Enemy exposing (Enemy)
 import Environment
+import Item exposing (Item(..))
 import Player exposing (Player)
 
 
@@ -48,8 +48,3 @@ experienceToLevelUp level =
 levelUp : Player -> Player
 levelUp player =
     { player | experience = player.experience - experienceToLevelUp player.level, level = player.level + 1 }
-
-
-lootEnemy : Player -> Enemy -> Player
-lootEnemy player enemy =
-    { player | inventory = player.inventory ++ enemy.loot }
