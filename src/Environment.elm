@@ -1,5 +1,6 @@
 module Environment exposing
     ( baseExperience
+    , chestAssetPath
     , entityOffsetY
     , experienceIncreaseFactor
     , floorAssetPath
@@ -101,4 +102,9 @@ obstacleAssetPath =
 
 gateAssetPath : String
 gateAssetPath =
-    "assets/tiles/gate.png"
+    "assets/tiles/door.png"
+
+
+chestAssetPath : String
+chestAssetPath =
+    "assets/tiles/chest.png"

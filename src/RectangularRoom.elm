@@ -8,6 +8,7 @@ module RectangularRoom exposing
     , updateEnemyLookDirectionInRoom
     )
 
+import Chest exposing (Chest)
 import Direction exposing (Direction(..))
 import Enemy exposing (Enemy)
 import Environment
@@ -26,6 +27,7 @@ type alias RectangularRoom =
     , level : Int
     , enemies : List Enemy
     , outerWalls : Wall
+    , chests : List Chest
     }
 
 
@@ -109,6 +111,7 @@ generate coordinate ( width, height ) obstacles level =
     , gates = addGates offsetX width offsetY height
     , level = level
     , enemies = []
+    , chests = []
     , outerWalls = generateWalls addedGates ( offsetX - 1, offsetY - 1 ) ( (Environment.screenWidth // 2 + width // 2) + 1, (Environment.screenHeight // 2 + height // 2) + 1 )
     }
 

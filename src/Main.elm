@@ -3,6 +3,7 @@ module Main exposing (main)
 import Action
 import Browser
 import Browser.Events
+import Chest exposing (Chest)
 import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
@@ -12,7 +13,7 @@ import Html.Attributes exposing (class, id, src, style)
 import Html.Events exposing (on)
 import Item exposing (Food, Item(..), Potion, Weapon, WeaponName(..))
 import Json.Decode as Decode
-import List exposing (length)
+import List
 import List.Extra
 import Player exposing (Player, PlayerStatus(..))
 import Process
@@ -25,7 +26,7 @@ import String
 import Svg exposing (Svg, image, line, rect, svg)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
-import Time exposing (toHour, toMinute, toSecond)
+import Time
 import Utils
 
 
@@ -63,6 +64,7 @@ type Msg
     | TileMouseOver ( Int, Int )
     | GetTimeZone Time.Zone
     | AddToHistory String Time.Posix
+    | Loot Chest
 
 
 type Status
@@ -148,6 +150,9 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
 
                         maybeGate =
                             List.Extra.find (\gate -> gate.location == newLocation) currentRoom.gates
+
+                        maybeChest =
+                            List.Extra.find (\chest -> chest.location == newLocation) currentRoom.chests
                     in
                     case maybeGate of
                         Just gate ->
@@ -156,11 +161,16 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                         Nothing ->
                             case maybeEnemy of
                                 Nothing ->
-                                    ( { model
-                                        | player = movePlayer direction model
-                                      }
-                                    , delayCmdMsg Action.playerWalkingDuration PlayerStatusToStanding
-                                    )
+                                    case maybeChest of
+                                        Just chest ->
+                                            ( model, msgToCmdMsg (Loot chest) )
+
+                                        Nothing ->
+                                            ( { model
+                                                | player = movePlayer direction model
+                                              }
+                                            , delayCmdMsg Action.playerWalkingDuration PlayerStatusToStanding
+                                            )
 
                                 Just enemy ->
                                     ( model, msgToCmdMsg (AttackEnemy enemy) )
@@ -249,15 +259,22 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
 
         GainExperience enemy ->
             let
-                newXpPlayer =
+                updatedPlayer =
                     Utils.gainExperience player enemy
 
                 levelUp =
-                    Utils.experienceToLevelUp newXpPlayer.level <= newXpPlayer.experience
+                    Utils.experienceToLevelUp updatedPlayer.level <= updatedPlayer.experience
+
+                updatedRoom =
+                    { currentRoom | chests = { location = enemy.position, loot = enemy.loot } :: currentRoom.chests }
             in
-            ( { model | player = newXpPlayer }
+            ( { model
+                | player = updatedPlayer
+                , currentRoom = updatedRoom
+                , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom gameMap
+              }
             , if levelUp then
-                msgToCmdMsg (LevelUp newXpPlayer)
+                msgToCmdMsg (LevelUp updatedPlayer)
 
               else
                 Cmd.none
@@ -442,11 +459,24 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             in
             ( { model
                 | history =
-                    if length history >= Environment.historyLimit then
+                    if List.length history >= Environment.historyLimit then
                         ativity :: List.Extra.removeAt (Environment.historyLimit - 1) history
 
                     else
                         ativity :: history
+              }
+            , Cmd.none
+            )
+
+        Loot chest ->
+            let
+                updatedRoom =
+                    { currentRoom | chests = List.Extra.filterNot (\c -> c.location == chest.location) currentRoom.chests }
+            in
+            ( { model
+                | player = { player | inventory = player.inventory ++ chest.loot }
+                , currentRoom = updatedRoom
+                , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom gameMap
               }
             , Cmd.none
             )
@@ -819,6 +849,7 @@ drawSVGRoom room =
     drawTiles room.inner Environment.floorAssetPath
         ++ drawTiles (List.map (\gate -> gate.location) room.gates) Environment.gateAssetPath
         ++ drawTiles room.walls Environment.obstacleAssetPath
+        ++ drawTiles (List.map (\chest -> chest.location) room.chests) Environment.chestAssetPath
 
 
 drawTiles : List ( Int, Int ) -> String -> List (Svg Msg)
@@ -1022,11 +1053,11 @@ displayPlayerStats status player =
 
 timeToString : Time.Zone -> Time.Posix -> String
 timeToString zone time =
-    String.fromInt (toHour zone time)
+    String.fromInt (Time.toHour zone time)
         ++ ":"
-        ++ String.fromInt (toMinute zone time)
+        ++ String.fromInt (Time.toMinute zone time)
         ++ ":"
-        ++ String.fromInt (toSecond zone time)
+        ++ String.fromInt (Time.toSecond zone time)
 
 
 displayHistory : Model -> Html Msg
@@ -1087,8 +1118,6 @@ view model =
                     [ displayPlayerStats model.status model.player
                     , displayHistory model
                     ]
-
-                --, div [ class "inventoryContainer" ] [ h1 [] [ text "Inventory" ] ]
                 , div [ class "itemContainer" ]
                     [ h1 []
                         [ text "Inventory"
