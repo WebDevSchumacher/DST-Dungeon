@@ -206,6 +206,8 @@ h1 {
 
 .itemUsage {
   padding: 0.126rem;
+  padding-left: 5px;
+  padding-right: 5px;
   display: flex;
   justify-content: space-between;
 }

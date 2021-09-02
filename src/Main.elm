@@ -58,8 +58,8 @@ type Msg
     | Pause
     | TileClick ( Int, Int )
     | ClickChangeInfoItem Item
-    | ClickRemoveItem Item
-    | ClickEquipWeapon Weapon
+    | RemoveItem Item
+    | UseItem Item
     | TileMouseOver ( Int, Int )
     | GetTimeZone Time.Zone
     | AddToHistory String Time.Posix
@@ -387,7 +387,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             , Cmd.none
             )
 
-        ClickRemoveItem item ->
+        RemoveItem item ->
             ( { model
                 | player =
                     { player
@@ -408,13 +408,29 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             , Cmd.none
             )
 
-        ClickEquipWeapon weapon ->
-            ( { model
-                | player =
-                    Player.playerChangeWeapon model.player weapon
-              }
-            , Cmd.none
-            )
+        UseItem item ->
+            case item of
+                Potions p ->
+                    ( { model
+                        | player = Player.playerUsePotion model.player p
+                      }
+                    , Task.perform (AddToHistory ("Player drinks " ++ Item.potionToString p)) Time.now
+                    )
+
+                Foods f ->
+                    ( { model
+                        | player = Player.playerUseFood model.player f
+                      }
+                    , Task.perform (AddToHistory ("Player eats " ++ Item.foodToString f)) Time.now
+                    )
+
+                Weapons w ->
+                    ( { model
+                        | player =
+                            Player.playerChangeWeapon model.player w
+                      }
+                    , Task.perform (AddToHistory ("Player equips " ++ Item.weaponToString w)) Time.now
+                    )
 
         AddToHistory his time ->
             let
@@ -918,9 +934,8 @@ createItemList maxinventory items =
                         [ img [ clickChangeInfoItem x, class "itemIMG", src ("assets/items/Potion/" ++ Item.potionToString p ++ ".png") ] []
                         , div [ class "itemText" ] [ text (Item.potionToString p ++ " (" ++ String.fromInt p.stack ++ ")") ]
                         , div [ class "itemUsage" ]
-                            [ img [ class "usage itemUse", src "assets/usage/drink.png" ] []
+                            [ img [ clickUseItem x, class "usage itemUse", src "assets/usage/drink.png" ] []
                             , img [ clickChangeInfoItem x, class "usage itemInfo", src "assets/usage/info.png" ] []
-                            , img [ class "usage itemRemoveOne", src "assets/usage/minus.png" ] []
                             , img [ clickRemoveItem x, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
                             ]
                         ]
@@ -930,9 +945,8 @@ createItemList maxinventory items =
                         [ img [ clickChangeInfoItem x, class "itemIMG", src ("assets/items/Food/" ++ Item.foodToString f ++ ".png") ] []
                         , div [ class "itemText" ] [ text (Item.foodToString f ++ " (" ++ String.fromInt f.stack ++ ")") ]
                         , div [ class "itemUsage" ]
-                            [ img [ class "usage itemUse", src "assets/usage/eat.png" ] []
+                            [ img [ clickUseItem x, class "usage itemUse", src "assets/usage/eat.png" ] []
                             , img [ clickChangeInfoItem x, class "usage itemInfo", src "assets/usage/info.png" ] []
-                            , img [ class "usage itemRemoveOne", src "assets/usage/minus.png" ] []
                             , img [ clickRemoveItem x, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
                             ]
                         ]
@@ -942,9 +956,8 @@ createItemList maxinventory items =
                         [ img [ clickChangeInfoItem x, class "itemIMG", src ("assets/items/Weapons/" ++ Item.weaponToString w ++ "/Sprite.png") ] []
                         , div [ class "itemText" ] [ text (Item.weaponToString w ++ " (" ++ String.fromInt w.stack ++ ")") ]
                         , div [ class "itemUsage" ]
-                            [ img [ clickEquipWeapon w, class "usage itemUse", src "assets/usage/hand.png" ] []
+                            [ img [ clickUseItem x, class "usage itemUse", src "assets/usage/hand.png" ] []
                             , img [ clickChangeInfoItem x, class "usage itemInfo", src "assets/usage/info.png" ] []
-                            , img [ class "usage itemRemoveOne", src "assets/usage/minus.png" ] []
                             , img [ clickRemoveItem x, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
                             ]
                         ]
@@ -1099,7 +1112,7 @@ view model =
 
 clickRemoveItem : Item -> Html.Attribute Msg
 clickRemoveItem item =
-    on "click" (Decode.succeed (ClickRemoveItem item))
+    on "click" (Decode.succeed (RemoveItem item))
 
 
 clickChangeInfoItem : Item -> Html.Attribute Msg
@@ -1107,9 +1120,9 @@ clickChangeInfoItem item =
     on "click" (Decode.succeed (ClickChangeInfoItem item))
 
 
-clickEquipWeapon : Weapon -> Html.Attribute Msg
-clickEquipWeapon weapon =
-    on "click" (Decode.succeed (ClickEquipWeapon weapon))
+clickUseItem : Item -> Html.Attribute Msg
+clickUseItem item =
+    on "click" (Decode.succeed (UseItem item))
 
 
 clickTile : ( Int, Int ) -> Html.Attribute Msg

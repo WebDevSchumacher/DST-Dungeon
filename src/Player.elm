@@ -1,7 +1,7 @@
-module Player exposing (Player, PlayerStatus(..), changeImgSrc, playerChangeWeapon, playerStatusToAttacking, playerStatusToDead, playerStatusToStanding, playerStatusToString)
+module Player exposing (Player, PlayerStatus(..), changeImgSrc, playerChangeWeapon, playerStatusToAttacking, playerStatusToDead, playerStatusToStanding, playerStatusToString, playerUseFood, playerUsePotion)
 
 import Direction exposing (Direction(..))
-import Item exposing (Item(..), Weapon)
+import Item exposing (Food, Item(..), Potion, Weapon)
 
 
 type PlayerStatus
@@ -85,3 +85,70 @@ playerChangeWeapon player weapon =
     { player
         | currentWeapon = Just weapon
     }
+
+
+playerUseFood : Player -> Food -> Player
+playerUseFood player food =
+    let
+        newItemList =
+            List.map
+                (\item ->
+                    case item of
+                        Foods f ->
+                            if f == food then
+                                Foods { f | stack = f.stack - 1 }
+
+                            else
+                                item
+
+                        _ ->
+                            item
+                )
+                player.inventory
+    in
+    { player
+        | inventory = filterItem newItemList
+        , life = player.life + food.healPoints
+    }
+
+
+playerUsePotion : Player -> Potion -> Player
+playerUsePotion player potion =
+    let
+        newItemList =
+            List.map
+                (\item ->
+                    case item of
+                        Potions p ->
+                            if p == potion then
+                                Potions { p | stack = p.stack - 1 }
+
+                            else
+                                item
+
+                        _ ->
+                            item
+                )
+                player.inventory
+    in
+    { player
+        | inventory = filterItem newItemList
+        , life = player.life + potion.healPoints
+    }
+
+
+filterItem : List Item -> List Item
+filterItem items =
+    List.filter
+        (\item ->
+            case item of
+                Foods f ->
+                    f.stack > 0
+
+                Potions p ->
+                    p.stack > 0
+
+                Weapons w ->
+                    w.stack > 0
+        )
+        items
