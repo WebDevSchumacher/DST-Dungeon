@@ -4,6 +4,7 @@ module Environment exposing
     , experienceIncreaseFactor
     , floorAssetPath
     , gateAssetPath
+    , historyLimit
     , numberRooms
     , obstacleAssetPath
     , playerBoundBox
@@ -81,6 +82,11 @@ wallCount =
 wallLength : Int
 wallLength =
     7
+
+
+historyLimit : Int
+historyLimit =
+    50
 
 
 floorAssetPath : String

@@ -3,6 +3,7 @@ module Enemy exposing
     , EnemyType(..)
     , createEnemy
     , cyclopes
+    , enemyTypeToString
     , imgSrc
     , mole
     , slime
@@ -115,13 +116,13 @@ enemyTypeToString : EnemyType -> String
 enemyTypeToString enemytype =
     case enemytype of
         Mole ->
-            "mole"
+            "Mole"
 
         Slime ->
-            "slime"
+            "Slime"
 
         Cyclopes ->
-            "cyclopes"
+            "Cyclopes"
 
 
 enemyStatusToString : EnemyStatus -> String
@@ -138,7 +139,7 @@ enemyStatusToString status =
 
 
 imgSrc : Enemy -> Direction -> String
-imgSrc enemy direction =
+imgSrc enemy _ =
     "assets/characters/enemies/" ++ enemyTypeToString enemy.enemyType ++ "/Walk.png"
 
 

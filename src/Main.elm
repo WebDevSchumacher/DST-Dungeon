@@ -10,8 +10,9 @@ import GameMap exposing (GameMap)
 import Html exposing (Attribute, Html, div, h1, h2, img, p, table, td, text, tr)
 import Html.Attributes exposing (class, id, src, style)
 import Html.Events exposing (on)
-import Item exposing (Food, Item(..), Potion, Weapon, WeaponName(..), sushi)
+import Item exposing (Food, Item(..), Potion, Weapon, WeaponName(..))
 import Json.Decode as Decode
+import List exposing (length)
 import List.Extra
 import Player exposing (Player, PlayerStatus(..))
 import Process
@@ -20,11 +21,11 @@ import RectangularRoom exposing (Gate, RectangularRoom)
 import Simple.Animation as Animation exposing (Animation)
 import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
-import String exposing (fromFloat)
+import String
 import Svg exposing (Svg, image, line, rect, svg)
 import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
-import Time
+import Time exposing (toHour, toMinute, toSecond)
 import Utils
 
 
@@ -34,6 +35,8 @@ type alias Model =
     , currentRoom : RectangularRoom
     , roomTransition : Maybe Direction
     , status : Status
+    , zone : Maybe Time.Zone
+    , history : List ( Time.Posix, String )
     }
 
 
@@ -58,6 +61,8 @@ type Msg
     | ClickRemoveItem Item
     | ClickEquipWeapon Weapon
     | TileMouseOver ( Int, Int )
+    | GetTimeZone Time.Zone
+    | AddToHistory String Time.Posix
 
 
 type Status
@@ -84,10 +89,12 @@ init =
         , playerStatus = Standing
         , currentInfoItem = Just (Foods Item.onigiri)
         }
+    , zone = Nothing
     , gameMap = [ room ]
     , currentRoom = room
     , roomTransition = Nothing
     , status = Running
+    , history = []
     }
 
 
@@ -206,12 +213,16 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                     , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom gameMap
                 }
                 target.position
-            , msgToCmdMsg
+            , Cmd.batch
                 (if attacked.lifePoints <= 0 then
-                    GainExperience attacked
+                    [ msgToCmdMsg (GainExperience attacked)
+                    , Task.perform (AddToHistory ("Player kills " ++ Enemy.enemyTypeToString target.enemyType)) Time.now
+                    ]
 
                  else
-                    AttackPlayer attacked
+                    [ msgToCmdMsg (AttackPlayer attacked)
+                    , Task.perform (AddToHistory ("Player attacks " ++ Enemy.enemyTypeToString target.enemyType)) Time.now
+                    ]
                 )
             )
 
@@ -227,11 +238,13 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                 | player = updatedPlayer
                 , currentRoom = newRoom
               }
-            , if updatedPlayer.life <= 0 then
-                msgToCmdMsg Die
+            , Cmd.batch
+                (if updatedPlayer.life <= 0 then
+                    [ msgToCmdMsg Die ]
 
-              else
-                delayCmdMsg Action.attackDuration PlayerStatusToStanding
+                 else
+                    [ delayCmdMsg Action.attackDuration PlayerStatusToStanding, Task.perform (AddToHistory (Enemy.enemyTypeToString enemy.enemyType ++ " attacks Player")) Time.now ]
+                )
             )
 
         GainExperience enemy ->
@@ -297,7 +310,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                         ( model, Cmd.none )
 
         Die ->
-            ( { model | status = Dead, player = Player.playerStatusToDead player }, Cmd.none )
+            ( { model | status = Dead, player = Player.playerStatusToDead player }, Task.perform (AddToHistory "Player Died") Time.now )
 
         Tick ->
             updateOnTick model
@@ -402,6 +415,28 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
               }
             , Cmd.none
             )
+
+        AddToHistory his time ->
+            let
+                history =
+                    model.history
+
+                ativity =
+                    ( time, his )
+            in
+            ( { model
+                | history =
+                    if length history >= Environment.historyLimit then
+                        ativity :: List.Extra.removeAt (Environment.historyLimit - 1) history
+
+                    else
+                        ativity :: history
+              }
+            , Cmd.none
+            )
+
+        GetTimeZone zone ->
+            ( { model | zone = Just zone }, Task.perform (AddToHistory "Game Started...") Time.now )
 
 
 updatePlayerLookDirection : Model -> ( Int, Int ) -> Model
@@ -917,19 +952,6 @@ createItemList maxinventory items =
                 :: createItemList (maxinventory - 1) xs
 
 
-statusDisplay : Status -> String
-statusDisplay status =
-    case status of
-        Running ->
-            "RUNNING"
-
-        Paused ->
-            "PAUSED"
-
-        Dead ->
-            "DEAD"
-
-
 displayPlayerStats : Status -> Player -> Html Msg
 displayPlayerStats status player =
     div
@@ -985,11 +1007,48 @@ displayPlayerStats status player =
         ]
 
 
+timeToString : Time.Zone -> Time.Posix -> String
+timeToString zone time =
+    String.fromInt (toHour zone time)
+        ++ ":"
+        ++ String.fromInt (toMinute zone time)
+        ++ ":"
+        ++ String.fromInt (toSecond zone time)
+
+
 displayHistory : Model -> Html Msg
 displayHistory model =
     div
         [ class "historyContainer" ]
-        [ Html.h3 [] [ text "History" ] ]
+        [ Html.h3 []
+            [ text "History" ]
+        , div [ class "historyDisplayer" ] [ table [] (displayHistoryHelper model.zone model.history) ]
+        ]
+
+
+displayHistoryHelper : Maybe Time.Zone -> List ( Time.Posix, String ) -> List (Html Msg)
+displayHistoryHelper zone history =
+    case history of
+        [] ->
+            []
+
+        h :: hs ->
+            case h of
+                ( time, activity ) ->
+                    tr []
+                        [ td [ class "historyTime" ]
+                            [ text
+                                (case zone of
+                                    Nothing ->
+                                        ""
+
+                                    Just z ->
+                                        timeToString z time
+                                )
+                            ]
+                        , td [ class "historyActivity" ] [ text activity ]
+                        ]
+                        :: displayHistoryHelper zone hs
 
 
 view : Model -> Html Msg
@@ -1218,7 +1277,7 @@ main : Program () Model Msg
 main =
     Browser.element
         { view = view
-        , init = \_ -> ( init, Cmd.none )
+        , init = \_ -> ( init, Task.perform GetTimeZone Time.here )
         , update = update
         , subscriptions = subscriptions
         }
