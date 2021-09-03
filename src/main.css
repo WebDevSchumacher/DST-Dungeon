@@ -196,6 +196,7 @@ h1 {
   cursor: pointer;
   margin-top: 0.189rem;
   height: 38px;
+  max-width: 3.475rem;
   image-rendering: pixelated;
 }
 

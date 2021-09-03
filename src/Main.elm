@@ -847,9 +847,21 @@ svgCanvasStyle =
 drawSVGRoom : RectangularRoom -> List (Svg Msg)
 drawSVGRoom room =
     drawTiles room.inner Environment.floorAssetPath
-        ++ drawTiles (List.map (\gate -> gate.location) room.gates) Environment.gateAssetPath
+        -- ++ drawTiles (List.map (\gate -> gate.location) room.gates) Environment.gateAssetPath
+        ++ drawGates room.gates
         ++ drawTiles room.walls Environment.obstacleAssetPath
         ++ drawTiles (List.map (\chest -> chest.location) room.chests) Environment.chestAssetPath
+
+
+drawGates : List Gate -> List (Svg Msg)
+drawGates gates =
+    case gates of
+        [] ->
+            []
+
+        g :: gs ->
+            drawTiles [ g.location ] (Environment.gateAssetPath ++ Direction.directionToString g.direction ++ ".png")
+                ++ drawGates gs
 
 
 drawTiles : List ( Int, Int ) -> String -> List (Svg Msg)
@@ -1103,7 +1115,14 @@ view model =
                 [ svg
                     (id "gameCanvas" :: svgCanvasStyle)
                     (rect
-                        (svgCanvasStyle ++ [ fill "#A9A9A9", stroke "black", strokeWidth "1" ])
+                        (svgCanvasStyle
+                            ++ [ fill "rgb(13,14,13)"
+
+                               {--, fill "#A9A9A9" --}
+                               , stroke "black"
+                               , strokeWidth "1"
+                               ]
+                        )
                         []
                         :: generateGridlines
                         ++ drawOuterWalls model.currentRoom.outerWalls
