@@ -23,8 +23,8 @@ import Simple.Animation as Animation exposing (Animation)
 import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
 import String
-import Svg exposing (Svg, image, line, rect, svg)
-import Svg.Attributes exposing (fill, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
+import Svg exposing (Svg, image, line, rect, svg, text_)
+import Svg.Attributes exposing (fill, fontSize, height, stroke, strokeWidth, viewBox, width, x, x1, x2, xlinkHref, y, y1, y2)
 import Task
 import Time
 import Utils
@@ -57,6 +57,7 @@ type Msg
     | Die
     | Tick
     | Pause
+    | StartGame
     | TileClick ( Int, Int )
     | ClickChangeInfoItem Item
     | RemoveItem Item
@@ -68,7 +69,8 @@ type Msg
 
 
 type Status
-    = Running
+    = Start
+    | Running
     | Paused
     | Dead
 
@@ -95,7 +97,7 @@ init =
     , gameMap = [ room ]
     , currentRoom = room
     , roomTransition = Nothing
-    , status = Running
+    , status = Start
     , history = []
     }
 
@@ -118,6 +120,15 @@ msgToCmdMsg msg =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
     case msg of
+        StartGame ->
+            let
+                initialModel =
+                    { init
+                        | status = Running
+                    }
+            in
+            ( initialModel, Task.perform (AddToHistory "Game Started...") Time.now )
+
         GenerateRoom location size obstacles ->
             if List.length obstacles < Environment.wallCount then
                 ( model, generateObstacleCoord location size obstacles )
@@ -179,6 +190,9 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                     ( model, Cmd.none )
 
                 Dead ->
+                    ( model, Cmd.none )
+
+                Start ->
                     ( model, Cmd.none )
 
         EnterGate gate ->
@@ -344,6 +358,9 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
 
                         Dead ->
                             Dead
+
+                        Start ->
+                            Start
               }
             , Cmd.none
             )
@@ -482,7 +499,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             )
 
         GetTimeZone zone ->
-            ( { model | zone = Just zone }, Task.perform (AddToHistory "Game Started...") Time.now )
+            ( { model | zone = Just zone }, Cmd.none )
 
 
 updatePlayerLookDirection : Model -> ( Int, Int ) -> Model
@@ -1107,6 +1124,96 @@ displayHistoryHelper zone history =
                         :: displayHistoryHelper zone hs
 
 
+displayButtonDescription : String -> Int -> Int -> Svg Msg
+displayButtonDescription txt xd yd =
+    text_
+        [ fill "white"
+        , fontSize "0.05rem"
+        , strokeWidth "0.01"
+        , x (String.fromInt xd)
+        , y (String.fromInt yd)
+        ]
+        [ text txt ]
+
+
+displayPlayerManuel : Int -> Int -> List (Svg Msg)
+displayPlayerManuel xOffSet yOffSet =
+    [ displayButtonDescription "'P' - to Pause&Unpause" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 4 + xOffSet)
+    , displayButtonDescription "'R' - to Restart Game" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 5 + xOffSet)
+    , displayButtonDescription "'← or A' - Move Left Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 6 + xOffSet)
+    , displayButtonDescription "'↑ or W' - Move Up Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 7 + xOffSet)
+    , displayButtonDescription "'→ or D' - Move Left Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 8 + xOffSet)
+    , displayButtonDescription "'↓ or S' - Move Down Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 9 + xOffSet)
+    ]
+
+
+displayStatusScreen : Status -> List (Html Msg)
+displayStatusScreen status =
+    case status of
+        Start ->
+            svg
+                [ stroke "white" ]
+                [ rect
+                    (svgCanvasStyle ++ [ fill "rgb(25,25,25, 0.8)" ])
+                    []
+                , text_
+                    [ on "click" (Decode.succeed StartGame)
+                    , Svg.Attributes.class "pauseSvgText"
+                    , fontSize "0.43rem"
+                    , strokeWidth "0.25"
+                    , x (String.fromInt ((Environment.screenWidth // 2) - 13))
+                    , y (String.fromInt ((Environment.screenHeight // 2) + 1))
+                    ]
+                    [ text "START"
+                    ]
+                , displayButtonDescription "Press 'S' to Start" ((Environment.screenWidth // 2) - 3) ((Environment.screenHeight // 2) + 3)
+                ]
+                :: displayPlayerManuel 2 0
+
+        Paused ->
+            svg
+                [ stroke "white" ]
+                [ rect
+                    (svgCanvasStyle ++ [ fill "rgb(25,25,25, 0.8)" ])
+                    []
+                , text_
+                    [ on "click" (Decode.succeed Pause)
+                    , Svg.Attributes.class "pauseSvgText"
+                    , fontSize "0.43rem"
+                    , strokeWidth "0.25"
+                    , x (String.fromInt ((Environment.screenWidth // 2) - 13))
+                    , y (String.fromInt ((Environment.screenHeight // 2) + 1))
+                    ]
+                    [ text "PAUSE"
+                    ]
+                ]
+                :: displayPlayerManuel 1 0
+
+        Dead ->
+            [ svg
+                [ stroke "rgba(255,125,125)"
+                ]
+                [ rect
+                    (svgCanvasStyle ++ [ fill "rgb(25,25,25, 0.8)" ])
+                    []
+                , text_
+                    [ on "click" (Decode.succeed StartGame)
+                    , Svg.Attributes.class "deathSvgText"
+                    , fontSize "0.3rem"
+                    , strokeWidth "0.25"
+                    , x (String.fromInt ((Environment.screenWidth // 2) - 13))
+                    , y (String.fromInt ((Environment.screenHeight // 2) + 1))
+                    ]
+                    [ text "YOU DIED"
+                    ]
+                , displayButtonDescription "Press 'r' to Restart" ((Environment.screenWidth // 2) - 3) ((Environment.screenHeight // 2) + 3)
+                ]
+            ]
+
+        Running ->
+            []
+
+
 view : Model -> Html Msg
 view model =
     div []
@@ -1130,6 +1237,7 @@ view model =
                         ++ playerToSvg
                             model.player
                         :: enemiesToSvg model.status model.currentRoom.enemies
+                        ++ displayStatusScreen model.status
                     )
                 ]
             , div [ class "dialogContainer" ]
@@ -1187,9 +1295,27 @@ mouseoverTile point =
 ---- SUBSCRIPTION EVENTS ----
 
 
+keyDecoderStart : Decode.Decoder Msg
+keyDecoderStart =
+    Decode.map toKeyStart (Decode.field "key" Decode.string)
+
+
 keyDecoder : Decode.Decoder Msg
 keyDecoder =
     Decode.map toKey (Decode.field "key" Decode.string)
+
+
+toKeyStart : String -> Msg
+toKeyStart string =
+    case string of
+        "s" ->
+            StartGame
+
+        "r" ->
+            StartGame
+
+        _ ->
+            None
 
 
 toKey : String -> Msg
@@ -1207,8 +1333,23 @@ toKey string =
         "ArrowLeft" ->
             Direction Left
 
+        "w" ->
+            Direction Up
+
+        "a" ->
+            Direction Left
+
+        "s" ->
+            Direction Down
+
+        "d" ->
+            Direction Right
+
         "p" ->
             Pause
+
+        "r" ->
+            StartGame
 
         _ ->
             None
@@ -1217,6 +1358,9 @@ toKey string =
 tickSubscription : Model -> Sub Msg
 tickSubscription model =
     case model.status of
+        Start ->
+            Sub.none
+
         Running ->
             Time.every 700 (\_ -> Tick)
 
@@ -1230,7 +1374,10 @@ tickSubscription model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ if model.player.playerStatus == Standing then
+        [ if model.status == Start || model.status == Dead then
+            Browser.Events.onKeyDown keyDecoderStart
+
+          else if model.player.playerStatus == Standing then
             Browser.Events.onKeyDown keyDecoder
 
           else

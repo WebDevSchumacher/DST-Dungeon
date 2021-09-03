@@ -1,6 +1,6 @@
 # Abschlussprojekt
 
-Elm Roguelike Game as University project for deklarative programming.
+Elm Roguelike Game as University project for declarative programming.
 
 # Elm App
 
@@ -20,6 +20,7 @@ elm-app install <package-name>
 
 ## Credit Assets
 
-Assets where taken from:
-https://pixel-boy.itch.io/ninja-adventure-asset-pack
-https://0x72.itch.io/dungeontileset-ii
+Assets where taken from:  
+https://pixel-boy.itch.io/ninja-adventure-asset-pack  
+https://0x72.itch.io/dungeontileset-ii  
+https://pixelfrog-assets.itch.io/pixel-adventure-1
