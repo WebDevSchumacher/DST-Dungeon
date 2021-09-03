@@ -1142,7 +1142,7 @@ displayPlayerManuel xOffSet yOffSet =
     , displayButtonDescription "'R' - to Restart Game" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 5 + xOffSet)
     , displayButtonDescription "'← or A' - Move Left Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 6 + xOffSet)
     , displayButtonDescription "'↑ or W' - Move Up Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 7 + xOffSet)
-    , displayButtonDescription "'→ or D' - Move Left Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 8 + xOffSet)
+    , displayButtonDescription "'→ or D' - Move Right Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 8 + xOffSet)
     , displayButtonDescription "'↓ or S' - Move Down Or Attack" ((Environment.screenWidth // 2) - 5 + yOffSet) ((Environment.screenHeight // 2) + 9 + xOffSet)
     ]
 
