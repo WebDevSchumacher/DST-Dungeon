@@ -189,7 +189,7 @@ h1 {
   padding: 0.126rem;
   border-radius: 0.126rem;
   height: 4.375rem;
-  width: 3.375rem;
+  width: 3.475rem;
 }
 
 .itemIMG {
@@ -202,6 +202,15 @@ h1 {
 .itemText,
 .itemUsage {
   font-size: 10px;
+}
+
+.itemText {
+  max-width: 3.475rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
 
 .itemUsage {

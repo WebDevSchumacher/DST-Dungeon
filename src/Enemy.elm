@@ -55,7 +55,7 @@ slime level position loot =
     , prevPosition = position
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/slime/Walk.png"
+    , enemyIMG = "assets/characters/enemies/Slime/Walk.png"
     , status = Walking
     }
 
@@ -72,7 +72,7 @@ mole level position loot =
     , prevPosition = position
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/mole/Walk.png"
+    , enemyIMG = "assets/characters/enemies/Mole/Walk.png"
     , status = Walking
     }
 
@@ -89,7 +89,7 @@ cyclopes level position loot =
     , prevPosition = position
     , position = position
     , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/cyclopes/Walk.png"
+    , enemyIMG = "assets/characters/enemies/Cyclopes/Walk.png"
     , status = Walking
     }
 

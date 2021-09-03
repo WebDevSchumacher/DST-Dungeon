@@ -102,7 +102,7 @@ obstacleAssetPath =
 
 gateAssetPath : String
 gateAssetPath =
-    "assets/tiles/door.png"
+    "assets/tiles/gate.png"
 
 
 chestAssetPath : String

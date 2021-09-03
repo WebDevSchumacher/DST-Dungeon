@@ -396,6 +396,7 @@ items =
     ]
 
 
+itemLevel : Item -> Int
 itemLevel item =
     case item of
         Foods food ->
