@@ -1159,16 +1159,31 @@ displayStatusScreen status =
                 , text_
                     [ on "click" (Decode.succeed StartGame)
                     , Svg.Attributes.class "pauseSvgText"
-                    , fontSize "0.43rem"
+                    , fontSize "0.3rem"
                     , strokeWidth "0.25"
                     , x (String.fromInt ((Environment.screenWidth // 2) - 13))
-                    , y (String.fromInt ((Environment.screenHeight // 2) + 1))
+                    , y (String.fromInt ((Environment.screenHeight // 2) - 3))
                     ]
-                    [ text "START"
+                    [ text "DUNGEON"
                     ]
-                , displayButtonDescription "Press 'S' to Start" ((Environment.screenWidth // 2) - 3) ((Environment.screenHeight // 2) + 3)
+                , svg
+                    [ width (String.fromInt (Environment.playerBoundBox * 4))
+                    , height (String.fromInt (Environment.playerBoundBox * 4))
+                    , x (String.fromInt ((Environment.screenWidth // 2) + 7))
+                    , y (String.fromInt ((Environment.screenHeight // 2) - 4))
+                    , viewBox "0 0 1 1"
+                    ]
+                    [ image
+                        [ --clickPlayer
+                          id "player_Walking"
+                        , width (String.fromInt (Environment.playerBoundBox * 4))
+                        , xlinkHref "assets/characters/player/Walk.png"
+                        ]
+                        []
+                    ]
+                , displayButtonDescription "Press 'S' to Start" ((Environment.screenWidth // 2) - 3) ((Environment.screenHeight // 2) - 1)
                 ]
-                :: displayPlayerManuel 2 0
+                :: displayPlayerManuel -2 0
 
         Paused ->
             svg

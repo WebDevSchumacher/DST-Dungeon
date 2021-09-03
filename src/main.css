@@ -4,6 +4,10 @@
 }
 
 /* Styling for animation and pixelart-------------------------------------*/
+#player_Walking {
+  animation: moveSprite 0.6s steps(4) infinite;
+  image-rendering: pixelated;
+}
 
 #player_Walking_down,
 #player_Walking_up,
