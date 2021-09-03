@@ -25,6 +25,7 @@ module Item exposing
     , milkPot
     , nonWeaponDamage
     , onigiri
+    , pierog
     , potionToString
     , shrimp
     , stick
@@ -107,6 +108,7 @@ type FoodName
     | Sushi
     | Onigiri
     | Shrimp
+    | Pierog
 
 
 type alias Damage =
@@ -187,6 +189,9 @@ foodToString food =
         Shrimp ->
             "Shrimp"
 
+        Pierog ->
+            "Pierog"
+
 
 isWeapon : Item -> Bool
 isWeapon item =
@@ -263,6 +268,16 @@ shrimp =
     , stack = 1
     , itemLevel = 1
     , info = "Shrimp and prawn are types of seafood that are consumed worldwide. Although shrimp and prawns belong to different suborders of Decapoda, they are very similar in appearance and the terms are often used interchangeably in commercial farming and wild fisheries."
+    }
+
+
+pierog : Food
+pierog =
+    { item = Pierog
+    , healPoints = 2
+    , stack = 1
+    , itemLevel = 1
+    , info = "Pierogi are filled dumplings made by wrapping unleavened dough around a savoury or sweet filling and cooking in boiling water. They are often then pan-fried before serving. "
     }
 
 
@@ -382,6 +397,7 @@ items =
     , Foods beef
     , Foods sushi
     , Foods onigiri
+    , Foods pierog
     , Potions lifePot
     , Potions medipack
     , Potions milkPot
