@@ -1116,9 +1116,9 @@ view model =
                     (id "gameCanvas" :: svgCanvasStyle)
                     (rect
                         (svgCanvasStyle
-                            ++ [ fill "rgb(13,14,13)"
+                            ++ [ fill "rgb(25,25,25)"
 
-                               {--, fill "#A9A9A9" --}
+                               --, fill "#A9A9A9"
                                , stroke "black"
                                , strokeWidth "1"
                                ]
