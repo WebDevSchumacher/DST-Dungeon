@@ -934,7 +934,7 @@ createItemInformation maybeItem =
             [ h2 [] [ text "Item Info" ]
             , img
                 [ class "itemDescIMG"
-                , src ("assets/items/" ++ Item.itemTypeToString item ++ "/" ++ Item.itemNameToString item ++ ".png")
+                , src (Item.assetSrc item)
                 ]
                 []
             , div [ class "itemDescription" ]
