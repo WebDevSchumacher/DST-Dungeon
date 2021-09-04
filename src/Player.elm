@@ -2,6 +2,7 @@ module Player exposing
     ( Player
     , PlayerStatus(..)
     , changeImgSrc
+    , hasItemInStats
     , heal
     , playerStatusToAttacking
     , playerStatusToDead
@@ -103,3 +104,17 @@ heal player item =
         | inventory = newItemList
         , life = player.life + item.value
     }
+
+
+hasItemInStats : Item -> Maybe Item -> Bool
+hasItemInStats item currentItem =
+    case currentItem of
+        Nothing ->
+            False
+
+        Just w ->
+            if w == item then
+                True
+
+            else
+                False

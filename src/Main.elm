@@ -436,42 +436,74 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                                     else
                                         model.player.currentInfoItem
 
-                                Nothing ->
+                                _ ->
                                     Nothing
+                        , currentWeapon =
+                            if Player.hasItemInStats item model.player.currentWeapon then
+                                Nothing
+
+                            else
+                                model.player.currentWeapon
+                        , currentArmor =
+                            if Player.hasItemInStats item model.player.currentArmor then
+                                Nothing
+
+                            else
+                                model.player.currentArmor
                     }
               }
-            , Cmd.none
+            , Task.perform (AddToHistory ("Player removes " ++ Item.itemNameToString item)) Time.now
             )
 
         UseItem item ->
-            case item.itemType of
-                Weapon ->
-                    ( { model
-                        | player = { player | currentWeapon = Just item }
-                      }
-                    , Task.perform (AddToHistory ("Player equips " ++ Item.itemNameToString item)) Time.now
-                    )
+            if status == Running then
+                case item.itemType of
+                    Weapon ->
+                        if Player.hasItemInStats item model.player.currentWeapon then
+                            ( { model
+                                | player = { player | currentWeapon = Nothing }
+                              }
+                            , Task.perform (AddToHistory ("Player unequips " ++ Item.itemNameToString item)) Time.now
+                            )
 
-                Armor ->
-                    ( { model
-                        | player = { player | currentArmor = Just item }
-                      }
-                    , Task.perform (AddToHistory ("Player equips " ++ Item.itemNameToString item)) Time.now
-                    )
+                        else
+                            ( { model
+                                | player = { player | currentWeapon = Just item }
+                              }
+                            , Task.perform (AddToHistory ("Player equips " ++ Item.itemNameToString item)) Time.now
+                            )
 
-                Food ->
-                    ( { model
-                        | player = Player.heal model.player item
-                      }
-                    , Task.perform (AddToHistory ("Player eats " ++ Item.itemNameToString item)) Time.now
-                    )
+                    Armor ->
+                        if Player.hasItemInStats item model.player.currentArmor then
+                            ( { model
+                                | player = { player | currentArmor = Nothing }
+                              }
+                            , Task.perform (AddToHistory ("Player unequips " ++ Item.itemNameToString item)) Time.now
+                            )
 
-                Potion ->
-                    ( { model
-                        | player = Player.heal model.player item
-                      }
-                    , Task.perform (AddToHistory ("Player drinks " ++ Item.itemNameToString item)) Time.now
-                    )
+                        else
+                            ( { model
+                                | player = { player | currentArmor = Just item }
+                              }
+                            , Task.perform (AddToHistory ("Player equips " ++ Item.itemNameToString item)) Time.now
+                            )
+
+                    Food ->
+                        ( { model
+                            | player = Player.heal model.player item
+                          }
+                        , Task.perform (AddToHistory ("Player eats " ++ Item.itemNameToString item)) Time.now
+                        )
+
+                    Potion ->
+                        ( { model
+                            | player = Player.heal model.player item
+                          }
+                        , Task.perform (AddToHistory ("Player drinks " ++ Item.itemNameToString item)) Time.now
+                        )
+
+            else
+                ( model, Cmd.none )
 
         AddToHistory his time ->
             let
@@ -947,8 +979,8 @@ createItemInformation maybeItem =
             ]
 
 
-createItemList : Int -> List Item -> List (Html Msg)
-createItemList maxInventory items =
+createItemList : Maybe Item -> Maybe Item -> Int -> List Item -> List (Html Msg)
+createItemList currentWeapon currentArmor maxInventory items =
     case items of
         [] ->
             if maxInventory <= 0 then
@@ -957,17 +989,25 @@ createItemList maxInventory items =
             else
                 div [ class "item" ]
                     []
-                    :: createItemList (maxInventory - 1) []
+                    :: createItemList currentWeapon currentArmor (maxInventory - 1) []
 
         i :: is ->
             let
                 icon =
                     case i.itemType of
                         Weapon ->
-                            "hand"
+                            if Player.hasItemInStats i currentWeapon then
+                                "unhand"
+
+                            else
+                                "hand"
 
                         Armor ->
-                            "hand"
+                            if Player.hasItemInStats i currentArmor then
+                                "unhand"
+
+                            else
+                                "hand"
 
                         Food ->
                             "eat"
@@ -989,7 +1029,7 @@ createItemList maxInventory items =
                     , img [ clickRemoveItem i, class "usage itemRemoveAll", src "assets/usage/delete.png" ] []
                     ]
                 ]
-                :: createItemList (maxInventory - 1) is
+                :: createItemList currentWeapon currentArmor (maxInventory - 1) is
 
 
 displayPlayerStats : Status -> Player -> Html Msg
@@ -1263,7 +1303,7 @@ view model =
                         ]
                         [ div [ class "inventory" ]
                             ([]
-                                ++ createItemList Environment.maxInventory model.player.inventory
+                                ++ createItemList model.player.currentWeapon model.player.currentArmor Environment.maxInventory model.player.inventory
                             )
                         , div [ class "itemInformation" ]
                             (createItemInformation model.player.currentInfoItem)
