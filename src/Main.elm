@@ -1462,7 +1462,7 @@ enemyGenerator room =
 
 randomEnemy : Random.Generator EnemyType
 randomEnemy =
-    Random.weighted ( 80, Slime ) [ ( 20, Cyclopes ), ( 40, Mole ) ]
+    Random.weighted ( 65, Slime ) [ ( 20, Cyclopes ), ( 40, Mole ), ( 5, GoldRacoon ), ( 30, Flame ), ( 30, Snake ) ]
 
 
 generateItem : RectangularRoom -> List Item -> Int -> Cmd Msg

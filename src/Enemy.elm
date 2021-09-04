@@ -39,8 +39,11 @@ type alias Enemy =
 
 type EnemyType
     = Cyclopes
+    | Flame
+    | Snake
     | Slime
     | Mole
+    | GoldRacoon
 
 
 slime : Int -> ( Int, Int ) -> List Item -> Enemy
@@ -77,6 +80,57 @@ mole level position loot =
     }
 
 
+goldRacoon : Int -> ( Int, Int ) -> List Item -> Enemy
+goldRacoon level position loot =
+    { level = level
+    , lifePoints = level * 2
+    , attackDamage = level
+    , strengthFactor = 1
+    , experience = level * 200
+    , loot = loot
+    , enemyType = GoldRacoon
+    , prevPosition = position
+    , position = position
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/GoldRacoon/Walk.png"
+    , status = Walking
+    }
+
+
+flame : Int -> ( Int, Int ) -> List Item -> Enemy
+flame level position loot =
+    { level = level
+    , lifePoints = level * 15
+    , attackDamage = level * 2
+    , strengthFactor = 1.4
+    , experience = level * 180
+    , loot = loot
+    , enemyType = Flame
+    , prevPosition = position
+    , position = position
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/Flame/Walk.png"
+    , status = Walking
+    }
+
+
+snake : Int -> ( Int, Int ) -> List Item -> Enemy
+snake level position loot =
+    { level = level
+    , lifePoints = level * 15
+    , attackDamage = level * 2
+    , strengthFactor = 1.5
+    , experience = level * 190
+    , loot = loot
+    , enemyType = Snake
+    , prevPosition = position
+    , position = position
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/Snake/Walk.png"
+    , status = Walking
+    }
+
+
 cyclopes : Int -> ( Int, Int ) -> List Item -> Enemy
 cyclopes level position loot =
     { level = level
@@ -105,6 +159,15 @@ createEnemy level pos enemyT loot =
                 Mole ->
                     [ mole level position loot ]
 
+                GoldRacoon ->
+                    [ goldRacoon level position loot ]
+
+                Snake ->
+                    [ snake level position loot ]
+
+                Flame ->
+                    [ flame level position loot ]
+
                 Cyclopes ->
                     [ cyclopes level position loot ]
 
@@ -118,8 +181,17 @@ enemyTypeToString enemytype =
         Mole ->
             "Mole"
 
+        GoldRacoon ->
+            "GoldRacoon"
+
+        Flame ->
+            "Flame"
+
         Slime ->
             "Slime"
+
+        Snake ->
+            "Snake"
 
         Cyclopes ->
             "Cyclopes"
