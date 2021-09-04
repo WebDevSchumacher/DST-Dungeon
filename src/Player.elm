@@ -1,7 +1,17 @@
-module Player exposing (Player, PlayerStatus(..), changeImgSrc, playerChangeWeapon, playerStatusToAttacking, playerStatusToDead, playerStatusToStanding, playerStatusToString, playerUseFood, playerUsePotion)
+module Player exposing
+    ( Player
+    , PlayerStatus(..)
+    , changeImgSrc
+    , heal
+    , playerStatusToAttacking
+    , playerStatusToDead
+    , playerStatusToStanding
+    , playerStatusToString
+    )
 
 import Direction exposing (Direction(..))
-import Item exposing (Food, Item(..), Potion, Weapon)
+import Item exposing (Item)
+import List.Extra
 
 
 type PlayerStatus
@@ -16,7 +26,8 @@ type alias Player =
     , experience : Int
     , life : Int
     , inventory : List Item
-    , currentWeapon : Maybe Weapon
+    , currentWeapon : Maybe Item
+    , currentArmor : Maybe Item
     , position : ( Int, Int )
     , prevPosition : ( Int, Int )
     , lookDirection : Direction
@@ -29,14 +40,12 @@ changeImgSrc : PlayerStatus -> Direction -> String
 changeImgSrc status direction =
     case status of
         Standing ->
-            -- "assets/characters/player/player_" ++ directionToString direction ++ ".png"
             "assets/characters/player/Walk.png"
 
         Walking ->
             "assets/characters/player/Walk.png"
 
         Attacking ->
-            -- "assets/characters/player/Attacker_" ++ directionToString direction ++ ".png"
             "assets/characters/player/Attack.png"
 
         Dead ->
@@ -80,58 +89,17 @@ playerStatusToDead player =
     }
 
 
-playerChangeWeapon : Player -> Weapon -> Player
-playerChangeWeapon player weapon =
-    { player
-        | currentWeapon = Just weapon
-    }
-
-
-playerUseFood : Player -> Food -> Player
-playerUseFood player food =
+heal : Player -> Item -> Player
+heal player item =
     let
         newItemList =
-            List.map
-                (\item ->
-                    case item of
-                        Foods f ->
-                            if f == food then
-                                Foods { f | stack = f.stack - 1 }
+            if item.stack > 1 then
+                List.Extra.updateIf (\i -> i == item) (\i -> { i | stack = i.stack - 1 }) player.inventory
 
-                            else
-                                item
-
-                        _ ->
-                            item
-                )
-                player.inventory
+            else
+                List.Extra.filterNot (\i -> i == item) player.inventory
     in
     { player
-        | inventory = Item.filterItem newItemList
-        , life = player.life + food.healPoints
-    }
-
-
-playerUsePotion : Player -> Potion -> Player
-playerUsePotion player potion =
-    let
-        newItemList =
-            List.map
-                (\item ->
-                    case item of
-                        Potions p ->
-                            if p == potion then
-                                Potions { p | stack = p.stack - 1 }
-
-                            else
-                                item
-
-                        _ ->
-                            item
-                )
-                player.inventory
-    in
-    { player
-        | inventory = Item.filterItem newItemList
-        , life = player.life + potion.healPoints
+        | inventory = newItemList
+        , life = player.life + item.value
     }

@@ -9,20 +9,21 @@ module Action exposing
     )
 
 import Enemy exposing (Enemy)
-import Item exposing (Weapon)
+import Environment
+import Item exposing (Item)
 import Path
 import Player exposing (Player)
 import RectangularRoom exposing (RectangularRoom)
 
 
-hitEnemy : Maybe Weapon -> Enemy -> Enemy
+hitEnemy : Maybe Item -> Enemy -> Enemy
 hitEnemy weapon enemy =
     case weapon of
         Nothing ->
-            { enemy | lifePoints = enemy.lifePoints - Item.nonWeaponDamage }
+            { enemy | lifePoints = enemy.lifePoints - Environment.nonWeaponDamage }
 
         Just w ->
-            { enemy | lifePoints = enemy.lifePoints - w.damage }
+            { enemy | lifePoints = enemy.lifePoints - w.value }
 
 
 hitPlayer : Enemy -> Player -> Player

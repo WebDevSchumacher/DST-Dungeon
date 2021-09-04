@@ -6,6 +6,9 @@ module Environment exposing
     , floorAssetPath
     , gateAssetPath
     , historyLimit
+    , maxInventory
+    , maxStack
+    , nonWeaponDamage
     , numberRooms
     , obstacleAssetPath
     , playerBoundBox
@@ -108,3 +111,18 @@ gateAssetPath =
 chestAssetPath : String
 chestAssetPath =
     "assets/tiles/chest.png"
+
+
+nonWeaponDamage : Int
+nonWeaponDamage =
+    5
+
+
+maxStack : Int
+maxStack =
+    99
+
+
+maxInventory : Int
+maxInventory =
+    8 * 5
