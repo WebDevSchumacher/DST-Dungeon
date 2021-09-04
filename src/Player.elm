@@ -113,8 +113,4 @@ hasItemInStats item currentItem =
             False
 
         Just w ->
-            if w.item == item.item then
-                True
-
-            else
-                False
+            w.item == item.item
