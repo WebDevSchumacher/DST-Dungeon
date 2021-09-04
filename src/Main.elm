@@ -11,7 +11,7 @@ import GameMap exposing (GameMap)
 import Html exposing (Attribute, Html, div, h1, h2, img, p, table, td, text, tr)
 import Html.Attributes exposing (class, id, src, style)
 import Html.Events exposing (on)
-import Item exposing (Food, Item(..), Potion, Weapon, WeaponName(..))
+import Item exposing (Armor, Heal, Item, ItemType, Loot(..), Weapon)
 import Json.Decode as Decode
 import List
 import List.Extra
@@ -47,20 +47,20 @@ type Msg
     | GenerateRoom ( Int, Int ) ( Int, Int ) (List ( Int, Int ))
     | EnemyMovement Enemy ( Int, Int )
     | PlayerStatusToStanding
-    | PlaceEnemy ( Int, EnemyType, RectangularRoom ) (List Item)
+    | PlaceEnemy ( Int, EnemyType, RectangularRoom ) (List Loot)
     | AttackEnemy Enemy
     | AttackPlayer Enemy
     | GainExperience Enemy
     | LevelUp Player
     | EnterGate Gate
-    | EnterRoom RectangularRoom (List Item)
+    | EnterRoom RectangularRoom (List Loot)
     | Die
     | Tick
     | Pause
     | TileClick ( Int, Int )
-    | ClickChangeInfoItem Item
-    | RemoveItem Item
-    | UseItem Item
+    | ClickChangeInfoItem Loot
+    | RemoveItem Loot
+    | UseItem Loot
     | TileMouseOver ( Int, Int )
     | GetTimeZone Time.Zone
     | AddToHistory String Time.Posix
@@ -83,13 +83,14 @@ init =
         { level = 1
         , experience = 0
         , life = 10
-        , inventory = [ Foods Item.pierog, Weapons Item.stick, Potions Item.milkPot, Foods Item.beef ]
+        , inventory = [ H Item.pierog, W Item.stick, H Item.milkPot, H Item.beef ]
         , currentWeapon = Nothing
+        , currentArmor = Nothing
         , position = room.center
         , prevPosition = room.center
         , lookDirection = Down
         , playerStatus = Standing
-        , currentInfoItem = Just (Foods Item.onigiri)
+        , currentInfoItem = Just (H Item.pierog)
         }
     , zone = Nothing
     , gameMap = [ room ]
@@ -408,9 +409,9 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             ( { model
                 | player =
                     { player
-                        | inventory = List.Extra.remove item model.player.inventory
+                        | inventory = List.Extra.remove item player.inventory
                         , currentInfoItem =
-                            case model.player.currentInfoItem of
+                            case player.currentInfoItem of
                                 Just it ->
                                     if it == item then
                                         Nothing
@@ -418,7 +419,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                                     else
                                         model.player.currentInfoItem
 
-                                _ ->
+                                Nothing ->
                                     Nothing
                     }
               }
@@ -427,26 +428,25 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
 
         UseItem item ->
             case item of
-                Potions p ->
+                H heal ->
                     ( { model
-                        | player = Player.playerUsePotion model.player p
+                        | player = Player.heal model.player item
                       }
-                    , Task.perform (AddToHistory ("Player drinks " ++ Item.potionToString p)) Time.now
+                    , Task.perform (AddToHistory ("Player uses " ++ Item.itemNameToString heal)) Time.now
                     )
 
-                Foods f ->
+                W weapon ->
                     ( { model
-                        | player = Player.playerUseFood model.player f
+                        | player = { player | currentWeapon = Just weapon }
                       }
-                    , Task.perform (AddToHistory ("Player eats " ++ Item.foodToString f)) Time.now
+                    , Task.perform (AddToHistory ("Player equips " ++ Item.itemNameToString weapon)) Time.now
                     )
 
-                Weapons w ->
+                A armor ->
                     ( { model
-                        | player =
-                            Player.playerChangeWeapon model.player w
+                        | player = { player | currentArmor = Just armor }
                       }
-                    , Task.perform (AddToHistory ("Player equips " ++ Item.weaponToString w)) Time.now
+                    , Task.perform (AddToHistory ("Player equips " ++ Item.itemNameToString armor)) Time.now
                     )
 
         AddToHistory his time ->
@@ -454,16 +454,16 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                 history =
                     model.history
 
-                ativity =
+                activity =
                     ( time, his )
             in
             ( { model
                 | history =
                     if List.length history >= Environment.historyLimit then
-                        ativity :: List.Extra.removeAt (Environment.historyLimit - 1) history
+                        activity :: List.Extra.removeAt (Environment.historyLimit - 1) history
 
                     else
-                        ativity :: history
+                        activity :: history
               }
             , Cmd.none
             )
@@ -518,7 +518,7 @@ updateOnTick ({ currentRoom, player } as model) =
     )
 
 
-addEnemyToModel : Int -> EnemyType -> RectangularRoom -> List Item -> Model -> Model
+addEnemyToModel : Int -> EnemyType -> RectangularRoom -> List Loot -> Model -> Model
 addEnemyToModel indexPos enemyT room loot model =
     let
         updatedRoom =
@@ -874,76 +874,39 @@ drawTiles ls path =
             []
 
 
-createItemInformation : Maybe Item -> List (Html Msg)
+createItemInformation : Maybe (Item a) -> List (Html Msg)
 createItemInformation maybeItem =
     case maybeItem of
         Nothing ->
             [ h2 [] [ text "Item Info" ] ]
 
         Just item ->
-            case item of
-                Foods f ->
-                    itemInformationFood f
+            let
+                spec =
+                    case item.itemType of
+                        Weapon ->
+                            "Damage: " ++ String.fromInt item.damage
 
-                Potions p ->
-                    itemInformationPotion p
+                        Armor ->
+                            "Armor: " ++ String.fromInt item.armor
 
-                Weapons w ->
-                    itemInformationWeapon w
-
-
-itemInformationFood : Food -> List (Html Msg)
-itemInformationFood f =
-    [ h2 [] [ text "Item Info" ]
-    , img
-        [ class "itemDescIMG"
-        , src ("assets/items/Food/" ++ Item.foodToString f ++ ".png")
-        ]
-        []
-    , div [ class "itemDescription" ]
-        [ div [] [ text ("Name: " ++ Item.foodToString f) ]
-        , div [] [ text "Type: Food" ]
-        , div [] [ text ("Healpoints: " ++ String.fromInt f.healPoints) ]
-        , div [] [ text ("Stack: " ++ String.fromInt f.stack) ]
-        , div [ class "itemDesc" ] [ text ("Description: " ++ f.info) ]
-        ]
-    ]
-
-
-itemInformationWeapon : Weapon -> List (Html Msg)
-itemInformationWeapon w =
-    [ h2 [] [ text "Item Info" ]
-    , img
-        [ class "itemDescIMG"
-        , src ("assets/items/Weapons/" ++ Item.weaponToString w ++ "/Sprite.png")
-        ]
-        []
-    , div [ class "itemDescription" ]
-        [ div [] [ text ("Name: " ++ Item.weaponToString w) ]
-        , div [] [ text "Type: Weapon" ]
-        , div [] [ text ("Damage: " ++ String.fromInt w.damage) ]
-        , div [] [ text ("Stack: " ++ String.fromInt w.stack) ]
-        , div [ class "itemDesc" ] [ text ("Description: " ++ w.info) ]
-        ]
-    ]
-
-
-itemInformationPotion : Potion -> List (Html Msg)
-itemInformationPotion p =
-    [ h2 [] [ text "Item Info" ]
-    , img
-        [ class "itemDescIMG"
-        , src ("assets/items/Potion/" ++ Item.potionToString p ++ ".png")
-        ]
-        []
-    , div [ class "itemDescription" ]
-        [ div [] [ text ("Name: " ++ Item.potionToString p) ]
-        , div [] [ text "Type: Potion" ]
-        , div [] [ text ("Healpoints: " ++ String.fromInt p.healPoints) ]
-        , div [] [ text ("Stack: " ++ String.fromInt p.stack) ]
-        , div [ class "itemDesc" ] [ text ("Description: " ++ p.info) ]
-        ]
-    ]
+                        Heal ->
+                            "Healpoints: " ++ String.fromInt item.healPoints
+            in
+            [ h2 [] [ text "Item Info" ]
+            , img
+                [ class "itemDescIMG"
+                , src ("assets/items/" ++ Item.itemTypeToString item ++ "/" ++ Item.itemNameToString item ++ ".png")
+                ]
+                []
+            , div [ class "itemDescription" ]
+                [ div [] [ text ("Name: " ++ Item.itemNameToString item) ]
+                , div [] [ text "Type: Food" ]
+                , div [] [ text spec ]
+                , div [] [ text ("Stack: " ++ String.fromInt item.stack) ]
+                , div [ class "itemDesc" ] [ text ("Description: " ++ item.info) ]
+                ]
+            ]
 
 
 createItemList : Int -> List Item -> List (Html Msg)

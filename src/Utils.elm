@@ -10,8 +10,6 @@ module Utils exposing
 import Direction exposing (Direction(..))
 import Enemy exposing (Enemy)
 import Environment
-import Item exposing (Item(..))
-import List.Extra
 import Player exposing (Player)
 
 
@@ -53,28 +51,27 @@ levelUp player =
     { player | experience = player.experience - experienceToLevelUp player.level, level = player.level + 1 }
 
 
+itemsToInventory : List Item -> List Item -> List Item
+itemsToInventory inventory loot =
+    case loot of
+        item :: rest ->
+            if itemInInventory item inventory then
+                itemsToInventory
+                    (List.Extra.updateIf
+                        (\invItem ->
+                            --invItem == item
+                            compareItem invItem item
+                        )
+                        (\invItem -> stackItem invItem)
+                        inventory
+                    )
+                    rest
 
---itemsToInventory : List Item -> List Item -> List Item
---itemsToInventory inventory loot =
---    case loot of
---        item :: rest ->
---            if itemInInventory item inventory then
---                itemsToInventory
---                    (List.Extra.updateIf
---                        (\invItem ->
---                            --invItem == item
---                            compareItem invItem item
---                        )
---                        (\invItem -> stackItem invItem)
---                        inventory
---                    )
---                    rest
---
---            else
---                itemsToInventory (item :: inventory) rest
---
---        [] ->
---            inventory
+            else
+                itemsToInventory (item :: inventory) rest
+
+        [] ->
+            inventory
 
 
 stackItem : Item -> Item
