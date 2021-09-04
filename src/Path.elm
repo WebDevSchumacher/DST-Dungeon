@@ -7,6 +7,7 @@ This is taken from https://github.com/danneu/elm-hex-grid and adjusted to Elm 0.
 module Path exposing (pathfind)
 
 import Dict exposing (Dict)
+import List.Extra
 import RectangularRoom exposing (RectangularRoom)
 import Set exposing (Set)
 
@@ -14,8 +15,15 @@ import Set exposing (Set)
 pathfind : ( Int, Int ) -> ( Int, Int ) -> RectangularRoom -> List ( Int, Int )
 pathfind start end room =
     let
+        enemies =
+            List.map (\enemy -> enemy.position)
+                (List.Extra.filterNot (\enemy -> enemy.position == start) room.enemies)
+
+        chests =
+            List.map (\chest -> chest.location) room.chests
+
         obstacles =
-            Set.fromList room.walls
+            Set.fromList (room.walls ++ enemies ++ chests)
 
         graph =
             pathGraph start end obstacles room
