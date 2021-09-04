@@ -85,7 +85,7 @@ init =
         { level = 1
         , experience = 0
         , life = 10
-        , inventory = [ Item.pierog, Item.stick, Item.milkPot, Item.beef ]
+        , inventory = [ Item.cloth, Item.stick, Item.milkPot, Item.beef, Item.pierog ]
         , currentWeapon = Nothing
         , currentArmor = Nothing
         , position = room.center
@@ -871,7 +871,6 @@ svgCanvasStyle =
 drawSVGRoom : RectangularRoom -> List (Svg Msg)
 drawSVGRoom room =
     drawTiles room.inner Environment.floorAssetPath
-        -- ++ drawTiles (List.map (\gate -> gate.location) room.gates) Environment.gateAssetPath
         ++ drawGates room.gates
         ++ drawTiles room.walls Environment.obstacleAssetPath
         ++ drawTiles (List.map (\chest -> chest.location) room.chests) Environment.chestAssetPath
@@ -1003,7 +1002,7 @@ displayPlayerStats status player =
             [ tr [] [ td [] [ text "Level:" ], td [] [ text (String.fromInt player.level) ] ]
             , tr [] [ td [] [ text "Health: " ], td [] [ text (String.fromInt player.life) ] ]
             , tr []
-                [ td [] [ text "Atk: " ]
+                [ td [] [ text "Attack: " ]
                 , td []
                     [ text
                         (case player.currentWeapon of
@@ -1012,6 +1011,19 @@ displayPlayerStats status player =
 
                             Just weapon ->
                                 String.fromInt weapon.value
+                        )
+                    ]
+                ]
+            , tr []
+                [ td [] [ text "Defence: " ]
+                , td []
+                    [ text
+                        (case player.currentArmor of
+                            Nothing ->
+                                String.fromInt Environment.nonArmorDefence
+
+                            Just armor ->
+                                String.fromInt armor.value
                         )
                     ]
                 ]
@@ -1025,10 +1037,23 @@ displayPlayerStats status player =
                     [ text
                         (case player.currentWeapon of
                             Nothing ->
-                                "Fist (No Weapon)"
+                                "Fist"
 
                             Just weapon ->
                                 Item.itemNameToString weapon
+                        )
+                    ]
+                ]
+            , tr []
+                [ td [] [ text "Armor: " ]
+                , td []
+                    [ text
+                        (case player.currentArmor of
+                            Nothing ->
+                                "Skin"
+
+                            Just armor ->
+                                Item.itemNameToString armor
                         )
                     ]
                 ]

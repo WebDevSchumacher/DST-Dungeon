@@ -24,3 +24,4 @@ Assets where taken from:
 https://pixel-boy.itch.io/ninja-adventure-asset-pack  
 https://0x72.itch.io/dungeontileset-ii  
 https://pixelfrog-assets.itch.io/pixel-adventure-1
+https://jeevo.itch.io/dungeoneering-eq-icon-pack

@@ -8,6 +8,7 @@ module Environment exposing
     , historyLimit
     , maxInventory
     , maxStack
+    , nonArmorDefence
     , nonWeaponDamage
     , numberRooms
     , obstacleAssetPath
@@ -116,6 +117,11 @@ chestAssetPath =
 nonWeaponDamage : Int
 nonWeaponDamage =
     5
+
+
+nonArmorDefence : Int
+nonArmorDefence =
+    0
 
 
 maxStack : Int

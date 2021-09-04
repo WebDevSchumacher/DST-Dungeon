@@ -28,7 +28,16 @@ hitEnemy weapon enemy =
 
 hitPlayer : Enemy -> Player -> Player
 hitPlayer enemy player =
-    { player | life = player.life - enemy.attackDamage }
+    let
+        defence =
+            case player.currentArmor of
+                Just armor ->
+                    armor.value
+
+                Nothing ->
+                    0
+    in
+    { player | life = player.life - (enemy.attackDamage - defence) }
 
 
 updateEnemyOnTick : Enemy -> Player -> RectangularRoom -> Maybe ( Enemy, ( Int, Int ) )

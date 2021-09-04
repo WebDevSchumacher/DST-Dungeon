@@ -1,30 +1,30 @@
 @font-face {
-  font-family: 'pixel-font';
-  src: url('../public/font/PixelFont.ttf');
+    font-family: 'pixel-font';
+    src: url('../public/font/PixelFont.ttf');
 }
 
 /* Styling for animation and pixelart-------------------------------------*/
 #player_Walking {
-  animation: moveSprite 0.6s steps(4) infinite;
-  image-rendering: pixelated;
+    animation: moveSprite 0.6s steps(4) infinite;
+    image-rendering: pixelated;
 }
 
 #player_Walking_down,
 #player_Walking_up,
 #player_Walking_left,
 #player_Walking_right {
-  animation: moveSprite 0.3s steps(4) infinite;
-  image-rendering: pixelated;
+    animation: moveSprite 0.3s steps(4) infinite;
+    image-rendering: pixelated;
 }
 
 @keyframes moveSprite {
-  from {
-    tranform: translate3d(0, 0px, 0);
-  }
+    from {
+        tranform: translate3d(0, 0px, 0);
+    }
 
-  to {
-    transform: translate3d(0, -400%, 0);
-  }
+    to {
+        transform: translate3d(0, -400%, 0);
+    }
 }
 
 .enemy_Standing,
@@ -32,264 +32,265 @@
 #player_Standing_up,
 #player_Standing_left,
 #player_Standing_right {
-  image-rendering: pixelated;
+    image-rendering: pixelated;
 }
 
 .enemy_Walking {
-  animation: moveSprite 1.5s steps(4) infinite;
-  image-rendering: pixelated;
+    animation: moveSprite 1.5s steps(4) infinite;
+    image-rendering: pixelated;
 }
 
 /* -------------------------------------------------------------------- */
 
 body {
-  padding: 1rem;
-  font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande',
+    padding: 1rem;
+    font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande',
     'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
-  margin: 0;
-  text-align: center;
-  color: #293c4b;
+    margin: 0;
+    text-align: center;
+    color: #293c4b;
 }
 
 line,
 rect {
-  vector-effect: non-scaling-stroke;
+    vector-effect: non-scaling-stroke;
 }
 
 .mainContainer {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-evenly;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
 }
 
 .dialogContainer {
-  display: flex;
-  flex-flow: column wrap;
-  justify-content: space-evenly;
+    display: flex;
+    flex-flow: column wrap;
+    justify-content: space-evenly;
 }
 
 .gameContainer {
-  width: 50rem;
-  height: 50rem;
-  max-width: 50rem;
-  max-height: 50rem;
-  border: 0.2rem solid #000;
+    width: 50rem;
+    height: 50rem;
+    max-width: 50rem;
+    max-height: 50rem;
+    border: 0.2rem solid #000;
 }
 
 .statsAndHistoryContainer {
-  display: flex;
-  flex-direction: row;
-  width: 40rem;
-  height: 20rem;
-  max-width: 40rem;
-  max-height: 20rem;
-  /* border: 0.2rem solid #000; */
-  border-radius: 0.252rem;
+    display: flex;
+    flex-direction: row;
+    width: 40rem;
+    height: 20rem;
+    max-width: 40rem;
+    max-height: 20rem;
+    /* border: 0.2rem solid #000; */
+    border-radius: 0.252rem;
 }
 
 .faceSetBox {
-  display: inline-block;
-  padding: 5px 5px 3px 5px;
-  background: url('../public/assets/HUD/FacesetBox.png');
-  margin-bottom: 1rem;
+    display: inline-block;
+    padding: 5px 5px 3px 5px;
+    background: url('../public/assets/HUD/FacesetBox.png');
+    margin-bottom: 0.5rem;
 }
 
 .historyContainer {
-  border: 1px black solid;
-  border-radius: 0.252rem;
-  margin-left: 2rem;
-  padding-left: 0.6rem;
-  padding-right: 0.6rem;
-  flex: auto;
-  height: auto;
-  background-color: #bbbbb4;
+    border: 1px black solid;
+    border-radius: 0.252rem;
+    margin-left: 2rem;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    flex: auto;
+    height: auto;
+    background-color: #bbbbb4;
 }
 
 .historyDisplayer {
-  height: 15rem;
-  overflow-y: scroll;
-  scrollbar-width: none; /* Firefox */
-  border: 1px black solid;
-  border-radius: 2px;
-  padding-top: 2px;
+    height: 15rem;
+    overflow-y: scroll;
+    scrollbar-width: none; /* Firefox */
+    border: 1px black solid;
+    border-radius: 2px;
+    padding-top: 2px;
 }
 
 .historyDisplayer::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 .historyTime,
 .historyActivity {
-  text-align: left;
-  padding-left: 0.5rem;
+    text-align: left;
+    padding-left: 0.5rem;
 }
 
 .historyTime {
-  color: rgba(45, 57, 221, 0.8);
+    color: rgba(45, 57, 221, 0.8);
 }
 
 .statsContainer {
-  border: 1px black solid;
-  width: 15.125rem;
-  border-radius: 0.252rem;
-  padding-left: 0.6rem;
-  padding-right: 0.6rem;
-  background-color: #dfdc8e;
+    border: 1px black solid;
+    width: 15.125rem;
+    border-radius: 0.252rem;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    background-color: #dfdc8e;
 }
 
 .statsContainer tr > td:first-child {
-  text-align: right;
-  font-weight: bold;
-  color: #3119c7;
+    text-align: right;
+    font-weight: bold;
+    color: #3119c7;
 }
 
 .statsContainer tr > td:nth-child(2) {
-  width: 100%;
+    width: 100%;
 }
 
 .inventoryContainer {
-  width: 40rem;
-  height: 20rem;
-  max-width: 40rem;
-  max-height: 20rem;
-  border: 0.2rem solid #000;
+    width: 40rem;
+    height: 20rem;
+    max-width: 40rem;
+    max-height: 20rem;
+    border: 0.2rem solid #000;
 }
 
 .itemContainer {
-  width: 40rem;
-  height: auto;
-  max-width: 40rem;
-  background-color: #62a6dd;
-  border: 0.2rem solid #000;
-  border-radius: 0.252rem;
+    width: 40rem;
+    height: auto;
+    max-width: 40rem;
+    background-color: #62a6dd;
+    border: 0.2rem solid #000;
+    border-radius: 0.252rem;
 }
 
 #gameCanvas {
-  min-width: 100%;
-  min-height: 100%;
+    min-width: 100%;
+    min-height: 100%;
 }
 
 [data-elm-hot='true'] {
-  height: inherit;
+    height: inherit;
 }
 
 h1 {
-  font-size: 30px;
+    font-size: 30px;
 }
 
 .inventory {
-  width: 30rem;
-  display: grid;
-  grid-template-columns: repeat(8, auto);
-  grid-gap: 0.063rem;
-  padding: 0.163rem 0 0.163rem 0.163rem;
+    width: 30rem;
+    display: grid;
+    grid-template-columns: repeat(8, auto);
+    grid-gap: 0.063rem;
+    padding: 0.163rem 0 0.163rem 0.163rem;
 }
 
 .item {
-  background-color: rgba(235, 226, 226, 0.8);
-  padding: 0.126rem;
-  border-radius: 0.126rem;
-  height: 4.375rem;
-  width: 3.475rem;
+    background-color: rgba(235, 226, 226, 0.8);
+    padding: 0.126rem;
+    border-radius: 0.126rem;
+    height: 4.375rem;
+    width: 3.475rem;
 }
 
 .itemIMG {
-  cursor: pointer;
-  margin-top: 0.189rem;
-  height: 38px;
-  max-width: 3.475rem;
-  image-rendering: pixelated;
+    cursor: pointer;
+    margin-top: 0.189rem;
+    height: 38px;
+    max-width: 3.475rem;
+    image-rendering: pixelated;
 }
 
 .itemText,
 .itemUsage {
-  font-size: 10px;
+    font-size: 10px;
 }
 
 .itemText {
-  max-width: 3.475rem;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
+    max-width: 3.475rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
 }
 
 .itemUsage {
-  padding: 0.126rem;
-  padding-left: 5px;
-  padding-right: 5px;
-  display: flex;
-  justify-content: space-between;
+    padding: 0.126rem;
+    padding-left: 5px;
+    padding-right: 5px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .usage {
-  width: 10.5px;
-  height: 10.5px;
-  cursor: pointer;
-  image-rendering: pixelated;
+    width: 10.5px;
+    height: 10.5px;
+    cursor: pointer;
+    image-rendering: pixelated;
 }
 
 .itemInformation {
-  width: auto;
-  flex-grow: 1;
-  background-color: rgba(149, 200, 211, 0.8);
-  padding: 0.126rem;
-  margin: 0.126rem;
-  border-radius: 0.126rem;
-  height: 23rem;
-  overflow-y: scroll;
+    width: auto;
+    flex-grow: 1;
+    background-color: rgba(149, 200, 211, 0.8);
+    padding: 0.126rem;
+    margin: 0.126rem;
+    border-radius: 0.126rem;
+    height: 23rem;
+    overflow-y: scroll;
 }
 
 ::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 16px rgba(86, 88, 97, 0.3);
-  border-radius: 10px;
+    box-shadow: inset 0 0 16px rgba(86, 88, 97, 0.3);
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  background-color: #b1cee2;
+    width: 10px;
+    background-color: #b1cee2;
 }
 
 ::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background-color: rgb(148, 141, 141);
+    border-radius: 10px;
+    background-color: rgb(148, 141, 141);
 }
 
 .itemDescIMG {
-  height: 45px;
-  image-rendering: pixelated;
-  margin-bottom: 15px;
+    height: 45px;
+    image-rendering: pixelated;
+    margin-bottom: 15px;
 }
 
 .itemDesc {
-  margin-top: 10px;
+    margin-top: 10px;
 }
 
 h1,
 h2,
 h3,
 svg text {
-  text-align: center;
-  font-family: pixel-font;
+    margin: 0.2em 0;
+    text-align: center;
+    font-family: pixel-font;
 }
 
 .pauseSvgText {
-  cursor: pointer;
-  fill: rgb(204, 202, 202);
+    cursor: pointer;
+    fill: rgb(204, 202, 202);
 }
 
 .pauseSvgText:hover {
-  cursor: pointer;
-  fill: rgba(218, 221, 45, 0.8);
+    cursor: pointer;
+    fill: rgba(218, 221, 45, 0.8);
 }
 
 .deathSvgText {
-  cursor: pointer;
-  fill: rgb(94, 22, 22);
+    cursor: pointer;
+    fill: rgb(94, 22, 22);
 }
 
 .deathSvgText:hover {
-  cursor: pointer;
-  fill: rgba(208, 50, 29, 0.8);
+    cursor: pointer;
+    fill: rgba(208, 50, 29, 0.8);
 }

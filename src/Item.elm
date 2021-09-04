@@ -3,26 +3,35 @@ module Item exposing
     , ItemName(..)
     , ItemType(..)
     , addLoot
+    , artificerArmor
     , assetSrc
     , axe
     , beef
     , bigSword
     , bow
+    , cloth
     , hammer
     , isItemInList
     , itemNameToString
     , itemTypeToString
     , katana
+    , leather
     , lifePot
     , lootTable
     , lootTableLevel
+    , magicArmor
+    , mail
     , medipack
     , milkPot
     , onigiri
     , pierog
+    , plate
+    , reinforcedLeather
+    , reinforcedPlate
     , shrimp
     , stick
     , superBow
+    , superiorArmor
     , sushi
     , sword
     )
@@ -47,6 +56,15 @@ type ItemName
     | LifePot
     | Medipack
     | MilkPot
+    | Cloth
+    | Leather
+    | ReinforcedLeather
+    | Mail
+    | Plate
+    | ReinforcedPlate
+    | SuperiorArmor
+    | MagicArmor
+    | ArtificerArmor
 
 
 type ItemType
@@ -242,6 +260,105 @@ katana =
     }
 
 
+cloth : Item
+cloth =
+    { item = Cloth
+    , itemType = Armor
+    , value = 1
+    , stack = 1
+    , itemLevel = 1
+    , info = ""
+    }
+
+
+leather : Item
+leather =
+    { item = Leather
+    , itemType = Armor
+    , value = 3
+    , stack = 1
+    , itemLevel = 2
+    , info = ""
+    }
+
+
+reinforcedLeather : Item
+reinforcedLeather =
+    { item = ReinforcedLeather
+    , itemType = Armor
+    , value = 5
+    , stack = 1
+    , itemLevel = 4
+    , info = ""
+    }
+
+
+mail : Item
+mail =
+    { item = Mail
+    , itemType = Armor
+    , value = 8
+    , stack = 1
+    , itemLevel = 5
+    , info = ""
+    }
+
+
+plate : Item
+plate =
+    { item = Plate
+    , itemType = Armor
+    , value = 11
+    , stack = 1
+    , itemLevel = 7
+    , info = ""
+    }
+
+
+reinforcedPlate : Item
+reinforcedPlate =
+    { item = ReinforcedPlate
+    , itemType = Armor
+    , value = 15
+    , stack = 1
+    , itemLevel = 10
+    , info = ""
+    }
+
+
+superiorArmor : Item
+superiorArmor =
+    { item = SuperiorArmor
+    , itemType = Armor
+    , value = 19
+    , stack = 1
+    , itemLevel = 14
+    , info = ""
+    }
+
+
+magicArmor : Item
+magicArmor =
+    { item = MagicArmor
+    , itemType = Armor
+    , value = 24
+    , stack = 1
+    , itemLevel = 19
+    , info = ""
+    }
+
+
+artificerArmor : Item
+artificerArmor =
+    { item = ArtificerArmor
+    , itemType = Armor
+    , value = 30
+    , stack = 1
+    , itemLevel = 24
+    , info = ""
+    }
+
+
 itemNameToString : Item -> String
 itemNameToString item =
     case item.item of
@@ -293,6 +410,33 @@ itemNameToString item =
         MilkPot ->
             "MilkPot"
 
+        Cloth ->
+            "Cloth"
+
+        Leather ->
+            "Leather"
+
+        ReinforcedLeather ->
+            "ReinforcedLeather"
+
+        Mail ->
+            "Mail"
+
+        Plate ->
+            "Plate"
+
+        ReinforcedPlate ->
+            "ReinforcedPlate"
+
+        SuperiorArmor ->
+            "SuperiorArmor"
+
+        MagicArmor ->
+            "MagicArmor"
+
+        ArtificerArmor ->
+            "ArtificerArmor"
+
 
 isItemInList : Item -> List Item -> Bool
 isItemInList item itemList =
@@ -338,6 +482,15 @@ items =
     , bigSword
     , superBow
     , katana
+    , cloth
+    , leather
+    , reinforcedLeather
+    , mail
+    , plate
+    , reinforcedPlate
+    , superiorArmor
+    , magicArmor
+    , artificerArmor
     ]
 
 
