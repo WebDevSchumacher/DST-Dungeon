@@ -1,8 +1,6 @@
 module Utils exposing
     ( experienceToLevelUp
-    ,  gainExperience
-       --, itemsToInventory
-
+    , gainExperience
     , levelUp
     , oppositeDirection
     )
@@ -49,76 +47,3 @@ experienceToLevelUp level =
 levelUp : Player -> Player
 levelUp player =
     { player | experience = player.experience - experienceToLevelUp player.level, level = player.level + 1 }
-
-
-itemsToInventory : List Item -> List Item -> List Item
-itemsToInventory inventory loot =
-    case loot of
-        item :: rest ->
-            if itemInInventory item inventory then
-                itemsToInventory
-                    (List.Extra.updateIf
-                        (\invItem ->
-                            --invItem == item
-                            compareItem invItem item
-                        )
-                        (\invItem -> stackItem invItem)
-                        inventory
-                    )
-                    rest
-
-            else
-                itemsToInventory (item :: inventory) rest
-
-        [] ->
-            inventory
-
-
-stackItem : Item -> Item
-stackItem item =
-    case item of
-        Foods f ->
-            Foods { f | stack = f.stack + 1 }
-
-        Potions p ->
-            Potions { p | stack = p.stack + 1 }
-
-        Weapons w ->
-            Weapons { w | stack = w.stack + 1 }
-
-
-itemInInventory : Item -> Item -> Bool
-itemInInventory invItem lootItem =
-    case invItem of
-        Foods invF ->
-            case lootItem of
-                Foods lF ->
-                    True
-
-                Potions lP ->
-                    True
-
-                Weapons lW ->
-                    True
-
-        Potions invP ->
-            case lootItem of
-                Foods lF ->
-                    True
-
-                Potions lP ->
-                    True
-
-                Weapons lW ->
-                    True
-
-        Weapons invW ->
-            case lootItem of
-                Foods lF ->
-                    True
-
-                Potions lP ->
-                    True
-
-                Weapons lW ->
-                    True

@@ -3,7 +3,6 @@ module Player exposing
     , PlayerStatus(..)
     , changeImgSrc
     , heal
-    , playerChangeWeapon
     , playerStatusToAttacking
     , playerStatusToDead
     , playerStatusToStanding
@@ -11,7 +10,7 @@ module Player exposing
     )
 
 import Direction exposing (Direction(..))
-import Item exposing (Armor, Heal, Loot(..), Weapon)
+import Item exposing (Item)
 import List.Extra
 
 
@@ -26,14 +25,14 @@ type alias Player =
     { level : Int
     , experience : Int
     , life : Int
-    , inventory : List Loot
-    , currentWeapon : Maybe Weapon
-    , currentArmor : Maybe Armor
+    , inventory : List Item
+    , currentWeapon : Maybe Item
+    , currentArmor : Maybe Item
     , position : ( Int, Int )
     , prevPosition : ( Int, Int )
     , lookDirection : Direction
     , playerStatus : PlayerStatus
-    , currentInfoItem : Maybe Loot
+    , currentInfoItem : Maybe Item
     }
 
 
@@ -90,24 +89,17 @@ playerStatusToDead player =
     }
 
 
-playerChangeWeapon : Player -> Weapon -> Player
-playerChangeWeapon player weapon =
-    { player
-        | currentWeapon = Just weapon
-    }
-
-
-heal : Player -> Loot -> Player
-heal player (H item) =
+heal : Player -> Item -> Player
+heal player item =
     let
         newItemList =
             if item.stack > 1 then
-                List.Extra.updateIf (\(H i) -> i == item) (\i -> i) player.inventory
+                List.Extra.updateIf (\i -> i == item) (\i -> { i | stack = i.stack - 1 }) player.inventory
 
             else
-                List.Extra.filterNot (\(H i) -> i == item) player.inventory
+                List.Extra.filterNot (\i -> i == item) player.inventory
     in
     { player
         | inventory = newItemList
-        , life = player.life + item.healPoints
+        , life = player.life + item.value
     }
