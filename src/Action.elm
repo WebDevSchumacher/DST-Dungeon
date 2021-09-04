@@ -37,7 +37,7 @@ hitPlayer enemy player =
                 Nothing ->
                     0
     in
-    { player | life = player.life - (enemy.attackDamage - defence) }
+    { player | life = player.life - max 0 (enemy.attackDamage - defence) }
 
 
 updateEnemyOnTick : Enemy -> Player -> RectangularRoom -> Maybe ( Enemy, ( Int, Int ) )
