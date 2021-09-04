@@ -531,7 +531,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                     { currentRoom | chests = List.Extra.filterNot (\c -> c.location == chest.location) currentRoom.chests }
             in
             ( { model
-                | player = { player | inventory = Item.addLoot player.inventory chest.loot }
+                | player = { player | inventory = Item.addLoot chest.loot player.inventory }
                 , currentRoom = updatedRoom
                 , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom gameMap
               }
@@ -1522,16 +1522,22 @@ generateItem room loot level =
 
 randomItem : Int -> Maybe (Random.Generator Item)
 randomItem level =
-    let
-        loot =
-            Item.lootTable level
-
-        _ =
-            Debug.log "" loot
-    in
-    case loot of
+    case Item.lootTable level of
         item :: rest ->
-            Just (Random.uniform item rest)
+            Just
+                (Random.weighted
+                    ( Item.dropProbabilityByType item.itemType * toFloat item.itemLevel
+                    , item
+                    )
+                    (List.map
+                        (\i ->
+                            ( Item.dropProbabilityByType i.itemType * toFloat item.itemLevel
+                            , i
+                            )
+                        )
+                        rest
+                    )
+                )
 
         [] ->
             Nothing

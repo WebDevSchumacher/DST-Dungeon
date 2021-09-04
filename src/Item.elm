@@ -10,6 +10,7 @@ module Item exposing
     , bigSword
     , bow
     , cloth
+    , dropProbabilityByType
     , hammer
     , isItemInList
     , itemNameToString
@@ -514,60 +515,44 @@ items =
     ]
 
 
-consumables : List Item
-consumables =
-    [ shrimp
-    , beef
-    , sushi
-    , onigiri
-    , pierog
-    , lifePot
-    , medipack
-    , milkPot
-    ]
-
-
 lootTable : Int -> List Item
 lootTable level =
-    let
-        possibleLoot =
-            if modBy 2 level == 0 then
-                items
-
-            else
-                consumables
-    in
     List.filter
         (\item ->
             item.itemLevel <= level
         )
-        possibleLoot
+        items
 
 
 lootTableLevel : List Item -> Int -> Int
 lootTableLevel loot acc =
     case loot of
         item :: rest ->
-            lootTableLevel rest (acc + item.itemLevel)
+            lootTableLevel rest (acc + item.itemLevel * item.stack)
 
         [] ->
             acc
 
 
 addLoot : List Item -> List Item -> List Item
-addLoot inventory loot =
+addLoot loot inventory =
     case loot of
         i :: is ->
-            if isItemInList i inventory then
-                List.Extra.updateIf (\invItem -> invItem.item == i.item)
-                    (\invItem -> { invItem | stack = invItem.stack + 1 })
-                    inventory
-
-            else
-                i :: addLoot inventory is
+            addItem inventory i |> addLoot is
 
         [] ->
             inventory
+
+
+addItem : List Item -> Item -> List Item
+addItem list item =
+    if isItemInList item list then
+        List.Extra.updateIf (\invItem -> invItem.item == item.item)
+            (\invItem -> { invItem | stack = invItem.stack + 1 })
+            list
+
+    else
+        item :: list
 
 
 assetSrc : Item -> String
@@ -588,3 +573,19 @@ assetSrc item =
 
         Potion ->
             "assets/items/" ++ itemTypeToString item ++ "/" ++ itemNameToString item ++ ".png"
+
+
+dropProbabilityByType : ItemType -> Float
+dropProbabilityByType iType =
+    case iType of
+        Weapon ->
+            1
+
+        Armor ->
+            1
+
+        Food ->
+            3
+
+        Potion ->
+            3
