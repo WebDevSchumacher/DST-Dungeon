@@ -128,7 +128,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                         | status = Running
                     }
             in
-            ( initialModel, Task.perform (AddToHistory "Game Started...") Time.now )
+            ( initialModel, Task.perform GetTimeZone Time.here )
 
         GenerateRoom location size obstacles ->
             if List.length obstacles < Environment.wallCount then
@@ -539,7 +539,15 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
             )
 
         GetTimeZone zone ->
-            ( { model | zone = Just zone }, Cmd.none )
+            if model.status == Running then
+                ( { model | zone = Just zone }
+                , Task.perform (AddToHistory "Game Started...") Time.now
+                )
+
+            else
+                ( model
+                , Cmd.none
+                )
 
 
 updatePlayerLookDirection : Model -> ( Int, Int ) -> Model
