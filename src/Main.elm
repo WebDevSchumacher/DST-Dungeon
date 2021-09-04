@@ -264,12 +264,13 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                 , currentRoom = newRoom
               }
             , Cmd.batch
-                (if updatedPlayer.life <= 0 then
-                    [ msgToCmdMsg Die ]
+                [ if updatedPlayer.life <= 0 then
+                    msgToCmdMsg Die
 
-                 else
-                    [ delayCmdMsg Action.attackDuration PlayerStatusToStanding, Task.perform (AddToHistory (Enemy.enemyTypeToString enemy.enemyType ++ " attacks Player")) Time.now ]
-                )
+                  else
+                    delayCmdMsg Action.attackDuration PlayerStatusToStanding
+                , Task.perform (AddToHistory (Enemy.enemyTypeToString enemy.enemyType ++ " attacks Player")) Time.now
+                ]
             )
 
         GainExperience enemy ->
