@@ -16,14 +16,14 @@ import Player exposing (Player)
 import RectangularRoom exposing (RectangularRoom)
 
 
-hitEnemy : Maybe Item -> Enemy -> Enemy
-hitEnemy weapon enemy =
-    case weapon of
+hitEnemy : Player -> Enemy -> Enemy
+hitEnemy player enemy =
+    case player.currentWeapon of
         Nothing ->
-            { enemy | lifePoints = enemy.lifePoints - Environment.nonWeaponDamage }
+            { enemy | lifePoints = enemy.lifePoints - (Environment.nonWeaponDamage + player.level) }
 
         Just w ->
-            { enemy | lifePoints = enemy.lifePoints - w.value }
+            { enemy | lifePoints = enemy.lifePoints - (w.value + player.level) }
 
 
 hitPlayer : Enemy -> Player -> Player

@@ -19,6 +19,7 @@ module Item exposing
     , lifePot
     , lootTable
     , lootTableLevel
+    , lootToString
     , magicArmor
     , mail
     , medipack
@@ -267,7 +268,7 @@ cloth =
     , value = 1
     , stack = 1
     , itemLevel = 1
-    , info = ""
+    , info = "A shirt. Don't expect much from a shirt"
     }
 
 
@@ -278,7 +279,7 @@ leather =
     , value = 3
     , stack = 1
     , itemLevel = 2
-    , info = ""
+    , info = "Cured leather suit. About as robust as it looks"
     }
 
 
@@ -289,7 +290,7 @@ reinforcedLeather =
     , value = 5
     , stack = 1
     , itemLevel = 4
-    , info = ""
+    , info = "Cured leather suit with a piece of metal tied to it. Might keep a knife out of your skin"
     }
 
 
@@ -300,7 +301,7 @@ mail =
     , value = 8
     , stack = 1
     , itemLevel = 5
-    , info = ""
+    , info = "A chainmail suit is heavy and unwieldy but might just save your life"
     }
 
 
@@ -311,7 +312,7 @@ plate =
     , value = 11
     , stack = 1
     , itemLevel = 7
-    , info = ""
+    , info = "Tough and sturdy. Any self-respecting adventurer should ask for no less"
     }
 
 
@@ -322,7 +323,7 @@ reinforcedPlate =
     , value = 15
     , stack = 1
     , itemLevel = 10
-    , info = ""
+    , info = "Thicker than regular plate. Useful for heavy duty monster slaying"
     }
 
 
@@ -333,7 +334,7 @@ superiorArmor =
     , value = 19
     , stack = 1
     , itemLevel = 14
-    , info = ""
+    , info = "A quality piece of armor. Guaranteed to keep claws out and your organs inside"
     }
 
 
@@ -344,7 +345,7 @@ magicArmor =
     , value = 24
     , stack = 1
     , itemLevel = 19
-    , info = ""
+    , info = "Quality material infused with ancient magic. A rare sight to see and worth a fortune"
     }
 
 
@@ -355,7 +356,7 @@ artificerArmor =
     , value = 30
     , stack = 1
     , itemLevel = 24
-    , info = ""
+    , info = "Forged by the fines smiths from the purest metals. Artfully designed and assembled to perfection."
     }
 
 
@@ -436,6 +437,25 @@ itemNameToString item =
 
         ArtificerArmor ->
             "ArtificerArmor"
+
+
+lootToString : List Item -> String
+lootToString loot =
+    case loot of
+        i :: is ->
+            let
+                delimiter =
+                    case is of
+                        _ :: _ ->
+                            ","
+
+                        [] ->
+                            ""
+            in
+            itemNameToString i ++ delimiter ++ lootToString is
+
+        [] ->
+            ""
 
 
 isItemInList : Item -> List Item -> Bool

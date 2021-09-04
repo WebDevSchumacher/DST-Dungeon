@@ -227,7 +227,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
         AttackEnemy target ->
             let
                 attacked =
-                    Action.hitEnemy player.currentWeapon target
+                    Action.hitEnemy player target
 
                 updatedRoom =
                     RectangularRoom.updateEnemies currentRoom target attacked
@@ -535,7 +535,7 @@ update msg ({ player, gameMap, currentRoom, roomTransition, status } as model) =
                 , currentRoom = updatedRoom
                 , gameMap = List.Extra.setIf (\r -> r.location == updatedRoom.location) updatedRoom gameMap
               }
-            , Cmd.none
+            , Task.perform (AddToHistory ("Player loots " ++ Item.lootToString chest.loot)) Time.now
             )
 
         GetTimeZone zone ->
@@ -1056,10 +1056,10 @@ displayPlayerStats status player =
                     [ text
                         (case player.currentWeapon of
                             Nothing ->
-                                String.fromInt Environment.nonWeaponDamage
+                                String.fromInt (Environment.nonWeaponDamage + player.level)
 
                             Just weapon ->
-                                String.fromInt weapon.value
+                                String.fromInt (weapon.value + player.level)
                         )
                     ]
                 ]
@@ -1522,7 +1522,14 @@ generateItem room loot level =
 
 randomItem : Int -> Maybe (Random.Generator Item)
 randomItem level =
-    case Item.lootTable level of
+    let
+        loot =
+            Item.lootTable level
+
+        _ =
+            Debug.log "" loot
+    in
+    case loot of
         item :: rest ->
             Just (Random.uniform item rest)
 
