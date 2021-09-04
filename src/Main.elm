@@ -930,11 +930,19 @@ createItemInformation maybeItem =
 
                         Potion ->
                             "Healpoints: " ++ String.fromInt item.value
+
+                srcImg =
+                    case item.itemType of
+                        Weapon ->
+                            "assets/items/" ++ Item.itemTypeToString item ++ "/" ++ Item.itemNameToString item ++ "/Sprite.png"
+
+                        _ ->
+                            "assets/items/" ++ Item.itemTypeToString item ++ "/" ++ Item.itemNameToString item ++ ".png"
             in
             [ h2 [] [ text "Item Info" ]
             , img
                 [ class "itemDescIMG"
-                , src ("assets/items/" ++ Item.itemTypeToString item ++ "/" ++ Item.itemNameToString item ++ ".png")
+                , src srcImg
                 ]
                 []
             , div [ class "itemDescription" ]
