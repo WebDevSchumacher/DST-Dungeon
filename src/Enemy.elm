@@ -46,13 +46,30 @@ type EnemyType
     | GoldRacoon
 
 
+goldRacoon : Int -> ( Int, Int ) -> List Item -> Enemy
+goldRacoon level position loot =
+    { level = level
+    , lifePoints = level * 5
+    , attackDamage = level
+    , strengthFactor = 1
+    , experience = level * 50
+    , loot = loot
+    , enemyType = GoldRacoon
+    , prevPosition = position
+    , position = position
+    , lookDirection = Right
+    , enemyIMG = "assets/characters/enemies/GoldRacoon/Walk.png"
+    , status = Walking
+    }
+
+
 slime : Int -> ( Int, Int ) -> List Item -> Enemy
 slime level position loot =
     { level = level
-    , lifePoints = level * 10
+    , lifePoints = level * 9
     , attackDamage = level
     , strengthFactor = 1.0
-    , experience = level * 100
+    , experience = level * 40
     , loot = loot
     , enemyType = Slime
     , prevPosition = position
@@ -66,10 +83,10 @@ slime level position loot =
 mole : Int -> ( Int, Int ) -> List Item -> Enemy
 mole level position loot =
     { level = level
-    , lifePoints = level * 15
+    , lifePoints = level * 11
     , attackDamage = level
-    , strengthFactor = 1.1
-    , experience = level * 120
+    , strengthFactor = 1.3
+    , experience = level * 50
     , loot = loot
     , enemyType = Mole
     , prevPosition = position
@@ -80,30 +97,13 @@ mole level position loot =
     }
 
 
-goldRacoon : Int -> ( Int, Int ) -> List Item -> Enemy
-goldRacoon level position loot =
-    { level = level
-    , lifePoints = level * 2
-    , attackDamage = level
-    , strengthFactor = 1
-    , experience = level * 200
-    , loot = loot
-    , enemyType = GoldRacoon
-    , prevPosition = position
-    , position = position
-    , lookDirection = Right
-    , enemyIMG = "assets/characters/enemies/GoldRacoon/Walk.png"
-    , status = Walking
-    }
-
-
 flame : Int -> ( Int, Int ) -> List Item -> Enemy
 flame level position loot =
     { level = level
-    , lifePoints = level * 15
+    , lifePoints = level * 5
     , attackDamage = level * 2
-    , strengthFactor = 1.4
-    , experience = level * 180
+    , strengthFactor = 1.5
+    , experience = level * 80
     , loot = loot
     , enemyType = Flame
     , prevPosition = position
@@ -117,10 +117,10 @@ flame level position loot =
 snake : Int -> ( Int, Int ) -> List Item -> Enemy
 snake level position loot =
     { level = level
-    , lifePoints = level * 15
-    , attackDamage = level * 2
+    , lifePoints = level * 9
+    , attackDamage = ceiling (toFloat level * 1.2)
     , strengthFactor = 1.5
-    , experience = level * 190
+    , experience = level * 80
     , loot = loot
     , enemyType = Snake
     , prevPosition = position
@@ -134,10 +134,10 @@ snake level position loot =
 cyclopes : Int -> ( Int, Int ) -> List Item -> Enemy
 cyclopes level position loot =
     { level = level
-    , lifePoints = level * 20
-    , attackDamage = level * 2
-    , strengthFactor = 1.5
-    , experience = level * 200
+    , lifePoints = level * 12
+    , attackDamage = ceiling (toFloat level * 1.4)
+    , strengthFactor = 1.8
+    , experience = level * 100
     , loot = loot
     , enemyType = Cyclopes
     , prevPosition = position

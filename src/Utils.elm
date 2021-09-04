@@ -31,7 +31,7 @@ gainExperience : Player -> Enemy -> Player
 gainExperience player enemy =
     let
         levelFactor =
-            1 - toFloat (player.level - enemy.level) / 10
+            1 - toFloat (player.level - enemy.level) / 20
 
         xp =
             floor (toFloat enemy.experience * levelFactor * enemy.strengthFactor)

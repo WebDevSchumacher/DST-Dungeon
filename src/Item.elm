@@ -84,13 +84,35 @@ type alias Item =
     }
 
 
+shrimp : Item
+shrimp =
+    { item = Shrimp
+    , itemType = Food
+    , value = 2
+    , stack = 1
+    , itemLevel = 1
+    , info = "Shrimp and prawn are types of seafood that are consumed worldwide. Although shrimp and prawns belong to different suborders of Decapoda, they are very similar in appearance and the terms are often used interchangeably in commercial farming and wild fisheries."
+    }
+
+
+pierog : Item
+pierog =
+    { item = Pierog
+    , itemType = Food
+    , value = 4
+    , stack = 1
+    , itemLevel = 2
+    , info = "Pierogi are filled dumplings made by wrapping unleavened dough around a savoury or sweet filling and cooking in boiling water. They are often then pan-fried before serving. "
+    }
+
+
 beef : Item
 beef =
     { item = Beef
     , itemType = Food
-    , value = 3
+    , value = 7
     , stack = 1
-    , itemLevel = 2
+    , itemLevel = 3
     , info = "Roast beef is a traditional dish of beef which is roasted. Essentially prepared as a main meal, the leftovers are often used in sandwiches and sometimes are used to make hash."
     }
 
@@ -99,10 +121,10 @@ sushi : Item
 sushi =
     { item = Sushi
     , itemType = Food
-    , value = 3
+    , value = 11
     , stack = 1
-    , itemLevel = 2
-    , info = "Sushi is traditionally made with medium-grain white rice, though it can be prepared with brown rice or short-grain rice. It is very often prepared with seaheal, such as squid, eel, yellowtail, salmon, tuna or imitation crab meat. Many types of sushi are vegetarian. It is often served with pickled ginger (gari), wasabi, and soy sauce. Daikon radish or pickled daikon (takuan) are popular garnishes for the dish."
+    , itemLevel = 4
+    , info = "Sushi is traditionally made with medium-grain white rice, though it can be prepared with brown rice or short-grain rice. It is very often prepared with seafood, such as squid, eel, yellowtail, salmon, tuna or imitation crab meat. Many types of sushi are vegetarian. It is often served with pickled ginger (gari), wasabi, and soy sauce. Daikon radish or pickled daikon (takuan) are popular garnishes for the dish."
     }
 
 
@@ -110,32 +132,10 @@ onigiri : Item
 onigiri =
     { item = Onigiri
     , itemType = Food
-    , value = 4
+    , value = 16
     , stack = 1
-    , itemLevel = 3
+    , itemLevel = 5
     , info = "Onigiri, also known as omusubi, nigirimeshi, or rice ball, is a Japanese heal made from white rice formed into triangular or cylindrical shapes and often wrapped in nori."
-    }
-
-
-shrimp : Item
-shrimp =
-    { item = Shrimp
-    , itemType = Food
-    , value = 2
-    , stack = 1
-    , itemLevel = 1
-    , info = "Shrimp and prawn are types of seaheal that are consumed worldwide. Although shrimp and prawns belong to different suborders of Decapoda, they are very similar in appearance and the terms are often used interchangeably in commercial farming and wild fisheries."
-    }
-
-
-pierog : Item
-pierog =
-    { item = Pierog
-    , itemType = Food
-    , value = 2
-    , stack = 1
-    , itemLevel = 1
-    , info = "Pierogi are filled dumplings made by wrapping unleavened dough around a savoury or sweet filling and cooking in boiling water. They are often then pan-fried before serving. "
     }
 
 
@@ -143,7 +143,7 @@ lifePot : Item
 lifePot =
     { item = LifePot
     , itemType = Potion
-    , value = 20
+    , value = 25
     , stack = 1
     , itemLevel = 8
     , info = "This is the simplest form healing Potion, it regenerates some Health"
@@ -154,10 +154,10 @@ medipack : Item
 medipack =
     { item = Medipack
     , itemType = Potion
-    , value = 40
+    , value = 45
     , stack = 1
-    , itemLevel = 10
-    , info = "This pack contains several tool for threating injuries"
+    , itemLevel = 12
+    , info = "This pack contains several tool for treating injuries"
     }
 
 
@@ -165,9 +165,9 @@ milkPot : Item
 milkPot =
     { item = MilkPot
     , itemType = Potion
-    , value = 40
+    , value = 80
     , stack = 1
-    , itemLevel = 10
+    , itemLevel = 17
     , info = "Milk (also known in unfermented form as sweet milk) is a nutrient-rich liquid food produced by the mammary glands of mammals."
     }
 
@@ -178,8 +178,8 @@ stick =
     , itemType = Weapon
     , value = 6
     , stack = 1
-    , itemLevel = 3
-    , info = "A simple stick, a pretty bad waepon but stil better then your own fist"
+    , itemLevel = 1
+    , info = "A simple stick, a pretty bad weapon but stil better then your own fist"
     }
 
 
@@ -187,9 +187,9 @@ bow : Item
 bow =
     { item = Bow
     , itemType = Weapon
-    , value = 10
+    , value = 8
     , stack = 1
-    , itemLevel = 5
+    , itemLevel = 3
     , info = "A bow is a ranged weapon"
     }
 
@@ -198,9 +198,9 @@ sword : Item
 sword =
     { item = Sword
     , itemType = Weapon
-    , value = 15
+    , value = 12
     , stack = 1
-    , itemLevel = 8
+    , itemLevel = 5
     , info = "A sword is a good weapon to defend yourself against monsters"
     }
 
@@ -209,9 +209,9 @@ axe : Item
 axe =
     { item = Axe
     , itemType = Weapon
-    , value = 30
+    , value = 18
     , stack = 1
-    , itemLevel = 12
+    , itemLevel = 8
     , info = "An axe is an implement that has been used for millennia to shape, split and cut wood, to harvest timber, as a weapon, and as a ceremonial or heraldic symbol. The axe has many forms and specialised uses but generally consists of an axe head with a handle, or helve. LET'S GO AND AXE YOU ENEMIES DOWN !!!"
     }
 
@@ -220,9 +220,9 @@ hammer : Item
 hammer =
     { item = Hammer
     , itemType = Weapon
-    , value = 40
+    , value = 27
     , stack = 1
-    , itemLevel = 14
+    , itemLevel = 11
     , info = "A war hammer is a weapon that was used by both foot-soldiers and cavalry. It is a very ancient weapon and gave its name, owing to its constant use, to Judah Maccabee, a 2nd-century BC Jewish rebel, and to Charles Martel, one of the rulers of France."
     }
 
@@ -231,7 +231,7 @@ superBow : Item
 superBow =
     { item = SuperBow
     , itemType = Weapon
-    , value = 40
+    , value = 38
     , stack = 1
     , itemLevel = 14
     , info = "This is an enhanced version of the Bow, it deals way more damge then a regular one"
@@ -242,9 +242,9 @@ bigSword : Item
 bigSword =
     { item = BigSword
     , itemType = Weapon
-    , value = 40
+    , value = 50
     , stack = 1
-    , itemLevel = 14
+    , itemLevel = 18
     , info = "An enhanced version of the sword, it is a sword that is only used by skilled warriors"
     }
 
@@ -253,9 +253,9 @@ katana : Item
 katana =
     { item = Katana
     , itemType = Weapon
-    , value = 55
+    , value = 65
     , stack = 1
-    , itemLevel = 18
+    , itemLevel = 23
     , info = "A katana is a Japanese sword characterized by a curved, single-edged blade with a circular or squared guard and long grip to accommodate two hands. Developed later than the tachi, it was used by samurai in feudal Japan and worn with the blade facing upward."
     }
 
@@ -494,27 +494,34 @@ items =
     ]
 
 
-
---itemLevel : Loot -> Int
---itemLevel loot =
---    case loot of
---        H heal ->
---            heal.itemLevel
---
---        W weapon ->
---            weapon.itemLevel
---
---        A armor ->
---            armor.itemLevel
+consumables : List Item
+consumables =
+    [ shrimp
+    , beef
+    , sushi
+    , onigiri
+    , pierog
+    , lifePot
+    , medipack
+    , milkPot
+    ]
 
 
 lootTable : Int -> List Item
 lootTable level =
+    let
+        possibleLoot =
+            if modBy 2 level == 0 then
+                items
+
+            else
+                consumables
+    in
     List.filter
         (\item ->
             item.itemLevel <= level
         )
-        items
+        possibleLoot
 
 
 lootTableLevel : List Item -> Int -> Int

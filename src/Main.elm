@@ -1494,7 +1494,7 @@ enemyGenerator room =
 
 randomEnemy : Random.Generator EnemyType
 randomEnemy =
-    Random.weighted ( 65, Slime ) [ ( 20, Cyclopes ), ( 40, Mole ), ( 5, GoldRacoon ), ( 30, Flame ), ( 30, Snake ) ]
+    Random.weighted ( 50, Slime ) [ ( 5, Cyclopes ), ( 20, Mole ), ( 5, GoldRacoon ), ( 10, Flame ), ( 10, Snake ) ]
 
 
 generateItem : RectangularRoom -> List Item -> Int -> Cmd Msg
@@ -1513,11 +1513,7 @@ generateItem room loot level =
 
 randomItem : Int -> Maybe (Random.Generator Item)
 randomItem level =
-    let
-        loot =
-            Item.lootTable level
-    in
-    case loot of
+    case Item.lootTable level of
         item :: rest ->
             Just (Random.uniform item rest)
 
