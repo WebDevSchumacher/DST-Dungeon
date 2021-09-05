@@ -4,6 +4,7 @@ import Action
 import Browser
 import Browser.Events
 import Chest exposing (Chest)
+import Dict
 import Direction exposing (Direction(..))
 import Enemy exposing (Enemy, EnemyType(..))
 import Environment
@@ -576,10 +577,10 @@ updateOnTick ({ currentRoom, player } as model) =
             List.map (\enemy -> Action.updateEnemyOnTick enemy player currentRoom) currentRoom.enemies
 
         enemyMovements =
-            List.filterMap identity maybeEnemyMovements
+            Dict.toList (Dict.fromList (List.filterMap identity maybeEnemyMovements))
     in
     ( model
-    , Cmd.batch (List.map (\( enemy, target ) -> msgToCmdMsg (EnemyMovement enemy target)) enemyMovements)
+    , Cmd.batch (List.map (\( target, enemy ) -> msgToCmdMsg (EnemyMovement enemy target)) enemyMovements)
     )
 
 

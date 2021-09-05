@@ -40,7 +40,7 @@ hitPlayer enemy player =
     { player | life = player.life - max 0 (enemy.attackDamage - defence) }
 
 
-updateEnemyOnTick : Enemy -> Player -> RectangularRoom -> Maybe ( Enemy, ( Int, Int ) )
+updateEnemyOnTick : Enemy -> Player -> RectangularRoom -> Maybe ( ( Int, Int ), Enemy )
 updateEnemyOnTick enemy player room =
     let
         maybeTarget =
@@ -48,9 +48,9 @@ updateEnemyOnTick enemy player room =
     in
     case maybeTarget of
         Just target ->
-            Just ( enemy, target )
+            Just ( target, enemy )
 
-        _ ->
+        Nothing ->
             Nothing
 
 
