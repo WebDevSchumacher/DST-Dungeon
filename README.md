@@ -5,7 +5,7 @@ Elm Roguelike Game as University project for declarative programming.
 ## Description of the process and implemented features
 ### Game World
 The player starts in a small room as an entrance.
-Rooms are made up of rectangular squares, with one square corresponding to one step of the player.
+Rooms are rectangular in shape and made up of squares, with one square corresponding to one step of the player.
 
 Rooms generally have exits on the 4 sides.
 
@@ -14,8 +14,8 @@ If this one does not yet exist within the world map, it is generated randomly (s
 When the room is generated, it is assigned a level that corresponds to the player's level and retains this level when re-entering.
 The room level determines the level of the opponents in this room.
 
-When entering a room, a random opponent is placed there. 
-It is also assigned loot, which can consist of several random items that correspond to the sum of the item levels of the opponent's level.
+When entering a room, a random opponent is placed within. 
+It is also assigned loot, which can consist of several random items. The sum of their item levels correspond to the opponent's level.
 
 Defeated enemies drop loot in the form of a crate.
 
@@ -24,7 +24,7 @@ Defeated enemies drop loot in the form of a crate.
 
 The player gains experience and levels up, which makes newly generated rooms more difficult, but also provides better loot.
 
-The game can potentially be run through indefinitely, tough items are implemented up to level 23, but rooms and enemies continue to scale regardless of this.
+The game can potentially run indefinitely, tough items are implemented up to level 23, but rooms and enemies continue to scale regardless of this.
 
 ### Interactions
 The player's actions are determined by the direction of movement or by the context of the target field:
