@@ -1,67 +1,67 @@
-# Abschlussprojekt
+# Final project
 
 Elm Roguelike Game as University project for declarative programming.
 
-## Beschreibung des Ablaufs und implementierter Features
+## Description of the process and implemented features
 ### Game World
-Der Spieler startet in einem kleinen Raum als Eingang.
-Räume sind rechteckig aus Feldern aufgebaut, wobei ein Feld einer Schrittweite des Spielers entspricht.
+The player starts in a small room as an entrance.
+Rooms are made up of rectangular squares, with one square corresponding to one step of the player.
 
-Räume haben grundsätzlich Ausgänge an den 4 Seiten.
+Rooms generally have exits on the 4 sides.
 
-Beim Betreten eines Ausgangs gelangt man in den nächsten Raum. 
-Existiert dieser noch nicht innerhalb der World Map, wird er zufällig generiert (Größe des Raums, Positionen der Hindernisse).
-Beim Generieren wird dem Raum ein Level zugewiesen, das dem des Spielers entspricht und behält dieses auch beim erneuten Betreten bei.
-Das Raumlevel bestimmt das Level der Gegner in diesem Raum.
+Passing an exit takes you to the next room. 
+If this one does not yet exist within the world map, it is generated randomly (size of the room, positions of the obstacles).
+When the room is generated, it is assigned a level that corresponds to the player's level and retains this level when re-entering.
+The room level determines the level of the opponents in this room.
 
-Beim Betreten eines Raums wird ein zufälliger Gegner dort platziert. 
-Dabei wird ihm auch der Loot zugewiesen, der aus mehreren zufälligen Items bestehen kann, die in der Summe der Item Levels dem Gegner Level entsprechen.
+When entering a room, a random opponent is placed there. 
+It is also assigned loot, which can consist of several random items that correspond to the sum of the item levels of the opponent's level.
 
-Besiegte Gegner lassen den Loot in Form einer Kiste fallen.
+Defeated enemies drop loot in the form of a crate.
 
 ![Enemy](https://user-images.githubusercontent.com/62644021/132124979-1fcf29ef-57a3-4ecf-8b30-ff64c80a64fd.png)
 ![Loot](https://user-images.githubusercontent.com/62644021/132124997-c0673111-8f36-4c41-bba5-2deab8b4ec47.png)
 
-Der Spieler sammelt Erfahrung und steigt im Level auf, wodurch anschließend neu generierte Räume schwieriger werden, aber auch besseren Loot ermöglichen.
+The player gains experience and levels up, which makes newly generated rooms more difficult, but also provides better loot.
 
-Potentiell kann das Spiel unendlich weit durchlaufen werden, wobei Items bis Level 23 implementiert sind, Räume und Gegner jedoch ungeachtet dessen weiter skalieren.
+The game can potentially be run through indefinitely, tough items are implemented up to level 23, but rooms and enemies continue to scale regardless of this.
 
-### Interaktionen
-Aktionen des Spielers werden durch die Laufrichtung bestimmt, bzw. durch den Kontext des Zielfeldes:
+### Interactions
+The player's actions are determined by the direction of movement or by the context of the target field:
 
-Freies Feld: Spieler läuft auf des Feld
+Free field: Player moves onto the field
 
-Gegner: Spieler schlägt den Gegner
+Opponent: Player hits the opponent
 
-Lootkiste: Spieler sammelt Items ein
+Loot crate: Player collects items
 
-Ausgang: Spieler geht in den nächsten Raum
+Exit: Player goes to the next room
 
-Gegner laufen und greifen den Spieler ebenfalls an, wobei dies durch ein Pathfinding Modul erreicht wird (Quellenangabe siehe unten, bzw Path.elm).
+Enemies also move and attack the player. This is achieved by a pathfinding module (see below for source, or Path.elm).
 
-### Inventar
-Über die Icons unter den gelisteten Items kann per Mausklick interagiert werden:
+### Inventory
+You can interact with the icons below the listed items by clicking on them:
 
-Benutzen (linkes Icon) unterscheidet sich zwischen den Item Typen. Waffen und Rüstung wird an- bzw abgelegt, Essen und Tränke werden konsumiert.
+"Use" (left icon) differs between the item types. Weapons and armour are equipped and taken off, food and potions are consumed.
 
-Wegwerfen (rechts Icon) entfernt den ganzen Stack aus dem Inventar.
+"Discard" (right icon) removes the entire stack from the inventory.
 
-Info (mittleres Icon oder Itembild) blendet die Iteminformation ein.
+"Info" (centre icon or item image) displays the item information.
 
 ![Inventory](https://user-images.githubusercontent.com/62644021/132125112-7ae6d4b7-06a9-4720-bb61-597296b36c9b.png)
 
-### Unterschiede zur geplanten Umsetzung
-Anstelle der Steuerung in Mausrichtung haben wir eine WASD Steuerung umgesetzt, die dem Grid-Layout des Spieles dienlicher ist.
+### Differences to the planned implementation
+Instead of controlling in the direction of the mouse, we have implemented WASD control, which is more conducive to the grid layout of the game.
 
-Interaktionen mit den Objekten im Raum nicht per Mausklick sondern wie oben beschrieben ebenfalls per WASD.
+Interactions with the objects in the room are not by mouse click but also by WASD as described above.
 
-Blocken bzw. Schilde als Items sind nicht implementiert.
+Blocks or shields as items are not implemented.
 
-Ausgänge sind nicht zufällig generiert sondern stets oben, unten, links und rechts.
+Exits are not randomly generated but always at the top, bottom, left and right.
 
-Spezielle Bossräume mit anspruchsvolleren Gegnern und besonderem Loot sind nicht implementiert.
+Special boss rooms with more challenging enemies and special loot are not implemented.
 
-Lootkisten tauchen nicht eigenständig in Räumen auf, sondern nur in Form von Gegnerloot.
+Loot boxes do not appear independently in rooms, but only in the form of enemy loot.
 
 # Elm App
 
